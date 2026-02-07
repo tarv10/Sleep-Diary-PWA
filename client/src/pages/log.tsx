@@ -625,17 +625,22 @@ function ZoneLabel({
   );
 }
 
-const NAP_MAX = 180;
-const NAP_EXPONENT = Math.log(0.25) / Math.log(0.5);
-
 function napSliderToMinutes(pos: number): number {
   if (pos <= 0) return 0;
-  return Math.round(NAP_MAX * Math.pow(pos, NAP_EXPONENT));
+  if (pos <= 0.5) {
+    return Math.round(45 * Math.pow(pos / 0.5, 1.5));
+  }
+  const t = (pos - 0.5) / 0.5;
+  return Math.round(45 + 135 * Math.pow(t, 1.8));
 }
 
 function napMinutesToSlider(min: number): number {
   if (min <= 0) return 0;
-  return Math.pow(min / NAP_MAX, 1 / NAP_EXPONENT);
+  if (min <= 45) {
+    return 0.5 * Math.pow(min / 45, 1 / 1.5);
+  }
+  const t = Math.pow((min - 45) / 135, 1 / 1.8);
+  return 0.5 + 0.5 * t;
 }
 
 function NapSlider({ value, onChange }: { value: number; onChange: (v: number) => void }) {
