@@ -365,14 +365,16 @@ const MONTH_MINUTES = 30 * 24 * 60;
 
 function AmPmDrum({ totalMinutes }: { totalMinutes: number }) {
   const norm = normalizeMinutes(totalMinutes);
-  const hour24 = Math.floor(norm / 60);
-  const ampmIndex = hour24 < 12 ? 0 : 1;
-  const minuteInHalf = norm % 720;
-  const fraction = minuteInHalf / 720 * 0.7;
+  const continuousValue = norm / 720 * 0.7;
 
-  const currentValue = ampmIndex + fraction;
-  const intIndex = Math.floor(currentValue);
-  const frac = currentValue - intIndex;
+  const hour24 = Math.floor(norm / 60);
+  const ownerIdx = hour24 < 12 ? 0 : 1;
+  const minuteInHalf = norm % 720;
+  const progressInHalf = minuteInHalf / 720;
+
+  const count = AMPM_ITEMS.length;
+  const intIndex = Math.floor(continuousValue);
+  const frac = continuousValue - intIndex;
 
   const renderCount = AMPM_VISIBLE + 2;
   const halfRender = Math.floor(renderCount / 2);
@@ -399,24 +401,17 @@ function AmPmDrum({ totalMinutes }: { totalMinutes: number }) {
 
       {Array.from({ length: renderCount }, (_, i) => {
         const offset = i - halfRender;
-        const itemIdx = ((intIndex + offset) % 2 + 2) % 2;
+        const itemIdx = ((intIndex + offset) % count + count) % count;
         const y = (offset - frac) * AMPM_ITEM_HEIGHT + AMPM_CENTER;
 
         if (y < -AMPM_ITEM_HEIGHT || y > AMPM_DRUM_HEIGHT + AMPM_ITEM_HEIGHT) return null;
 
-        const isCurrentAmPm = itemIdx === ampmIndex;
-        const progressInHalf = minuteInHalf / 720;
         let opacity: number;
-        if (isCurrentAmPm) {
+        if (itemIdx === ownerIdx) {
           opacity = 1;
         } else {
-          const nextIdx = (ampmIndex + 1) % 2;
-          if (itemIdx === nextIdx) {
-            const fade = progressInHalf > 0.75 ? (progressInHalf - 0.75) * 4 : 0;
-            opacity = 0.12 + fade * 0.5;
-          } else {
-            opacity = 0.08;
-          }
+          const fade = progressInHalf > 0.75 ? (progressInHalf - 0.75) * 4 : 0;
+          opacity = 0.12 + fade * 0.5;
         }
 
         return (
