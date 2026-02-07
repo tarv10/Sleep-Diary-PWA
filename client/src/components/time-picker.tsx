@@ -202,7 +202,7 @@ export default function TimePicker({ value, onChange, onClose, label }: TimePick
           </div>
         )}
 
-        <div className="flex items-center justify-center gap-0 px-4 py-4">
+        <div className="relative flex items-center justify-center gap-0 px-4 py-4">
           <Drum
             type="hour"
             totalMinutes={totalMinutes}
@@ -221,24 +221,15 @@ export default function TimePicker({ value, onChange, onClose, label }: TimePick
             </div>
           </div>
 
-          <div className="relative" style={{ height: DRUM_HEIGHT }}>
-            <Drum
-              type="minute"
-              totalMinutes={totalMinutes}
-              currentValue={currentMinuteQ}
-              items={MINUTES}
-              onTouchStart={handleTouchStart("minute")}
-              onWheel={handleWheel("minute")}
-            />
-            <div
-              className="absolute right-0 flex items-center pointer-events-none z-30"
-              style={{ top: CENTER_OFFSET, height: ITEM_HEIGHT }}
-            >
-              <span className="text-xs font-medium text-foreground/40 ml-1 -mr-6">
-                {ampm}
-              </span>
-            </div>
-          </div>
+          <Drum
+            type="minute"
+            totalMinutes={totalMinutes}
+            currentValue={currentMinuteQ}
+            items={MINUTES}
+            onTouchStart={handleTouchStart("minute")}
+            onWheel={handleWheel("minute")}
+            ampm={ampm}
+          />
         </div>
 
         <div className="px-6 pb-6 pt-2">
@@ -262,9 +253,10 @@ interface DrumProps {
   items: number[];
   onTouchStart: (e: React.TouchEvent) => void;
   onWheel: (e: React.WheelEvent) => void;
+  ampm?: string;
 }
 
-function Drum({ type, totalMinutes, currentValue, items, onTouchStart, onWheel }: DrumProps) {
+function Drum({ type, totalMinutes, currentValue, items, onTouchStart, onWheel, ampm }: DrumProps) {
   const count = items.length;
   const intIndex = Math.floor(currentValue);
   const fraction = currentValue - intIndex;
@@ -359,6 +351,17 @@ function Drum({ type, totalMinutes, currentValue, items, onTouchStart, onWheel }
           </div>
         );
       })}
+
+      {ampm && (
+        <div
+          className="absolute right-1 flex items-end pointer-events-none z-30"
+          style={{ top: CENTER_OFFSET, height: ITEM_HEIGHT, paddingBottom: 12 }}
+        >
+          <span className="text-xs font-medium text-foreground/40">
+            {ampm}
+          </span>
+        </div>
+      )}
     </div>
   );
 }
