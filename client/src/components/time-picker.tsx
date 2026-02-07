@@ -230,7 +230,7 @@ export default function TimePicker({ value, onChange, onClose, label }: TimePick
             onWheel={handleWheel("minute")}
           />
 
-          <div className="ml-0.5">
+          <div className="ml-1">
             <AmPmDrum totalMinutes={totalMinutes} />
           </div>
         </div>
@@ -277,7 +277,7 @@ function Drum({ type, totalMinutes, currentValue, items, onTouchStart, onWheel }
   return (
     <div
       className="relative overflow-hidden touch-none select-none"
-      style={{ height: DRUM_HEIGHT, width: type === "hour" ? 80 : 64 }}
+      style={{ height: DRUM_HEIGHT, width: type === "hour" ? 88 : 72 }}
       onTouchStart={onTouchStart}
       onWheel={onWheel}
       data-testid={`drum-${type}`}
