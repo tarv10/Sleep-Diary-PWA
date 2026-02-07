@@ -1,0 +1,56 @@
+Build a mobile-first sleep diary PWA (Progressive Web App) optimized for iPhone Safari "Add to Home Screen". 
+
+## Auth
+Use simple persistent local storage with optional PIN lock — no email/password sign-up. Data should persist across sessions without re-authentication.
+
+## Design Direction
+This should feel like a well-made instrument, not a consumer health app.
+
+- **Aesthetic**: Minimal, typographic, monochromatic. Think Braun, not Headspace. No illustrations, no emoji, no gradients, no card-heavy layouts.
+- **Palette**: True dark background (#0A0A0A or similar), with a single muted accent color (e.g. warm amber or cool slate blue) used sparingly for interactive elements only. White/light grey text with clear hierarchy.
+- **Typography**: Use a single clean sans-serif (Inter or SF Pro). Establish clear hierarchy through weight and size, not color. Numbers should feel prominent — this is a data app.
+- **Layout**: Generous whitespace. Left-aligned. No visual clutter. Every screen should feel calm.
+- **Interactions**: Smooth transitions, no janky animations. Everything should feel responsive and weighted.
+- **Time pickers**: Use native `<input type="time">` to trigger iOS's built-in drum roller — do NOT build custom JavaScript time pickers. The native picker is faster, more accessible, and feels right.
+- **Toggles and steppers**: Simple, tactile. Large enough to tap without precision. Toggles should have a subtle animation.
+- **Overall principle**: If it looks like it could be a medical device interface, you're on the right track. If it looks like it belongs on Product Hunt, strip it back.
+
+## Daily Sleep Log Entry
+Default date: yesterday. Allow selecting past dates for backfilling.
+
+### Time Capture (priority: speed of entry)
+Native iOS time pickers for all time fields:
+- **Bedtime** (time I got into bed)
+- **Sleep time** (time I estimate I fell asleep)
+- **Wake time** (final wake-up)
+- **Night wakings**: tap "+" to add wake periods with start/end times
+- **Nap** (optional): single start/end time
+
+### Auto-calculated fields (displayed prominently):
+- **Time in bed** = wake time - bedtime
+- **Total sleep** = time in bed - (sleep latency) - (total night waking time)
+- **Sleep efficiency** = (total sleep / time in bed) × 100%
+- Add nap duration separately, show adjusted total
+
+### Other daily fields:
+- **Drinks** (alcohol): number stepper (0-10+)
+- **Weed**: toggle (yes/no)
+- **Insights**: toggle (yes/no) — flag for notable observations
+- **Next-day feeling**: 1-5 scale
+- **Notes**: free text field
+
+## Dashboard
+- Weekly/monthly summary view
+- Average sleep duration, efficiency, and feeling score
+- Trends: correlate drinks/weed with sleep quality and next-day feeling
+- Simple, clean charts — thin lines, no fills, minimal gridlines
+
+## Data Export
+- Export all entries as CSV including all raw fields plus calculated fields (total sleep, sleep efficiency)
+- Allow filtering export by date range
+- Trigger the iOS Share sheet so I can email, AirDrop, or save to Files directly
+
+## Technical requirements
+- PWA with offline support and service worker
+- All data stored locally (localStorage or IndexedDB)
+- Large touch targets throughout — this is used half-asleep
