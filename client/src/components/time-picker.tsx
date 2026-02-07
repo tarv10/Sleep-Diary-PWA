@@ -363,9 +363,13 @@ const AMPM_CENTER = CENTER_OFFSET;
 
 function AmPmDrum({ totalMinutes }: { totalMinutes: number }) {
   const norm = normalizeMinutes(totalMinutes);
-  const currentValue = norm / 720;
+  const shifted = ((norm - 360) % 1440 + 1440) % 1440;
+  const currentValue = shifted / 720;
   const intIndex = Math.floor(currentValue);
   const fraction = currentValue - intIndex;
+
+  const isAM = norm < 720;
+  const activeIdx = isAM ? 0 : 1;
 
   const count = AMPM_ITEMS.length;
   const renderCount = VISIBLE_COUNT + 4;
@@ -398,9 +402,8 @@ function AmPmDrum({ totalMinutes }: { totalMinutes: number }) {
 
         if (y < -AMPM_ITEM_HEIGHT || y > AMPM_DRUM_HEIGHT + AMPM_ITEM_HEIGHT) return null;
 
-        const distFromCenter = Math.abs(offset - fraction);
-        const opacity = Math.max(0.08, 1 - distFromCenter * 0.6);
-        const scale = Math.max(0.7, 1 - distFromCenter * 0.08);
+        const opacity = itemIdx === activeIdx ? 1 : 0.15;
+        const scale = Math.max(0.7, 1 - Math.abs(offset - fraction) * 0.08);
 
         return (
           <div
