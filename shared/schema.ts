@@ -30,9 +30,15 @@ export type SleepEntry = z.infer<typeof sleepEntrySchema>;
 export interface AppSettings {
   pinEnabled: boolean;
   pin: string | null;
+  defaultBedtime: string;
+  defaultSleepTime: string;
+  defaultWakeTime: string;
 }
 
 export const defaultSettings: AppSettings = {
   pinEnabled: false,
   pin: null,
+  defaultBedtime: "22:30",
+  defaultSleepTime: "23:00",
+  defaultWakeTime: "07:00",
 };
