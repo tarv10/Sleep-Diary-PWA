@@ -228,8 +228,9 @@ export default function TimePicker({ value, onChange, onClose, label }: TimePick
             items={MINUTES}
             onTouchStart={handleTouchStart("minute")}
             onWheel={handleWheel("minute")}
-            ampm={ampm}
           />
+
+          <AmPmDrum totalMinutes={totalMinutes} />
         </div>
 
         <div className="px-6 pb-6 pt-2">
@@ -253,10 +254,9 @@ interface DrumProps {
   items: number[];
   onTouchStart: (e: React.TouchEvent) => void;
   onWheel: (e: React.WheelEvent) => void;
-  ampm?: string;
 }
 
-function Drum({ type, totalMinutes, currentValue, items, onTouchStart, onWheel, ampm }: DrumProps) {
+function Drum({ type, totalMinutes, currentValue, items, onTouchStart, onWheel }: DrumProps) {
   const count = items.length;
   const intIndex = Math.floor(currentValue);
   const fraction = currentValue - intIndex;
@@ -352,16 +352,80 @@ function Drum({ type, totalMinutes, currentValue, items, onTouchStart, onWheel, 
         );
       })}
 
-      {ampm && (
-        <div
-          className="absolute flex items-end pointer-events-none z-30"
-          style={{ top: CENTER_OFFSET, height: ITEM_HEIGHT, paddingBottom: 14, right: -2 }}
-        >
-          <span className="text-lg font-medium text-foreground/40">
-            {ampm}
-          </span>
-        </div>
-      )}
+    </div>
+  );
+}
+
+const AMPM_ITEMS = ["am", "pm"];
+const AMPM_VISIBLE = 3;
+const AMPM_ITEM_HEIGHT = 48;
+const AMPM_DRUM_HEIGHT = AMPM_VISIBLE * AMPM_ITEM_HEIGHT;
+const AMPM_CENTER = Math.floor(AMPM_VISIBLE / 2) * AMPM_ITEM_HEIGHT;
+const MONTH_MINUTES = 30 * 24 * 60;
+
+function AmPmDrum({ totalMinutes }: { totalMinutes: number }) {
+  const norm = normalizeMinutes(totalMinutes);
+  const hour24 = Math.floor(norm / 60);
+  const ampmIndex = hour24 < 12 ? 0 : 1;
+  const minuteInHalf = norm % 720;
+  const fraction = minuteInHalf / MONTH_MINUTES;
+
+  const currentValue = ampmIndex + fraction;
+  const intIndex = Math.floor(currentValue);
+  const frac = currentValue - intIndex;
+
+  const renderCount = AMPM_VISIBLE + 2;
+  const halfRender = Math.floor(renderCount / 2);
+
+  return (
+    <div
+      className="relative overflow-hidden touch-none select-none"
+      style={{ height: AMPM_DRUM_HEIGHT, width: 32 }}
+    >
+      <div
+        className="absolute inset-x-0 top-0 pointer-events-none z-20"
+        style={{
+          height: AMPM_CENTER,
+          background: "linear-gradient(to bottom, #161b22 0%, #161b22cc 40%, transparent 100%)",
+        }}
+      />
+      <div
+        className="absolute inset-x-0 bottom-0 pointer-events-none z-20"
+        style={{
+          height: AMPM_CENTER,
+          background: "linear-gradient(to top, #161b22 0%, #161b22cc 40%, transparent 100%)",
+        }}
+      />
+
+      {Array.from({ length: renderCount }, (_, i) => {
+        const offset = i - halfRender;
+        const itemIdx = ((intIndex + offset) % 2 + 2) % 2;
+        const y = (offset - frac) * AMPM_ITEM_HEIGHT + AMPM_CENTER;
+
+        if (y < -AMPM_ITEM_HEIGHT || y > AMPM_DRUM_HEIGHT + AMPM_ITEM_HEIGHT) return null;
+
+        const distFromCenter = Math.abs(offset - frac);
+        const opacity = offset === 0 || (offset === 1 && frac > 0.5) || (offset === -1 && frac < 0.5)
+          ? Math.max(0.15, 1 - distFromCenter * 2)
+          : 0.08;
+
+        return (
+          <div
+            key={i}
+            className="absolute inset-x-0 flex items-center justify-center"
+            style={{
+              height: AMPM_ITEM_HEIGHT,
+              transform: `translateY(${y}px)`,
+              opacity,
+              willChange: "transform, opacity",
+            }}
+          >
+            <span className="text-lg font-medium text-white">
+              {AMPM_ITEMS[itemIdx]}
+            </span>
+          </div>
+        );
+      })}
     </div>
   );
 }
