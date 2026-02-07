@@ -212,7 +212,7 @@ export default function TimePicker({ value, onChange, onClose, label }: TimePick
             onWheel={handleWheel("hour")}
           />
 
-          <div className="relative select-none -mx-2" style={{ height: DRUM_HEIGHT }}>
+          <div className="relative select-none -mx-1" style={{ height: DRUM_HEIGHT }}>
             <div
               className="absolute inset-x-0 flex items-center justify-center text-5xl font-light text-foreground/20"
               style={{ top: CENTER_OFFSET, height: ITEM_HEIGHT }}
