@@ -234,13 +234,20 @@ interface DrumProps {
   onWheel: (e: React.WheelEvent) => void;
 }
 
-function Drum({ type, currentValue, items, onTouchStart, onWheel }: DrumProps) {
+function Drum({ type, totalMinutes, currentValue, items, onTouchStart, onWheel }: DrumProps) {
   const count = items.length;
   const intIndex = Math.floor(currentValue);
   const fraction = currentValue - intIndex;
 
   const renderCount = VISIBLE_COUNT + 4;
   const halfRender = Math.floor(renderCount / 2);
+
+  const norm = normalizeMinutes(totalMinutes);
+  const ownerHour = Math.floor(norm / 60);
+  const minuteInHour = norm % 60;
+  const minuteProgress = minuteInHour / 60;
+
+  const isHour = type === "hour";
 
   return (
     <div
@@ -278,8 +285,26 @@ function Drum({ type, currentValue, items, onTouchStart, onWheel }: DrumProps) {
         if (y < -ITEM_HEIGHT || y > DRUM_HEIGHT + ITEM_HEIGHT) return null;
 
         const distFromCenter = Math.abs(offset - fraction);
-        const opacity = Math.max(0.05, 1 - distFromCenter * 0.35);
         const scale = Math.max(0.7, 1 - distFromCenter * 0.08);
+
+        let opacity: number;
+
+        if (isHour) {
+          const hourVal = items[itemIndex];
+          if (hourVal === ownerHour) {
+            opacity = 1;
+          } else if (hourVal === (ownerHour + 1) % 24) {
+            const fade = minuteProgress > 0.75 ? (minuteProgress - 0.75) * 4 : 0;
+            opacity = 0.12 + fade * 0.5;
+          } else if (hourVal === (ownerHour - 1 + 24) % 24) {
+            const fade = minuteProgress < 0.25 ? (0.25 - minuteProgress) * 4 : 0;
+            opacity = 0.12 + fade * 0.5;
+          } else {
+            opacity = 0.08;
+          }
+        } else {
+          opacity = Math.max(0.08, 1 - distFromCenter * 0.4);
+        }
 
         return (
           <div
@@ -292,7 +317,10 @@ function Drum({ type, currentValue, items, onTouchStart, onWheel }: DrumProps) {
               willChange: "transform, opacity",
             }}
           >
-            <span className="text-3xl font-light tabular-nums text-foreground">
+            <span className={cn(
+              "tabular-nums text-foreground",
+              isHour ? "text-4xl font-semibold" : "text-2xl font-light"
+            )}>
               {items[itemIndex].toString().padStart(2, "0")}
             </span>
           </div>
