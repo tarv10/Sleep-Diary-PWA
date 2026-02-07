@@ -357,24 +357,24 @@ function Drum({ type, totalMinutes, currentValue, items, onTouchStart, onWheel }
 }
 
 const AMPM_ITEMS = ["am", "pm"];
-const AMPM_VISIBLE = 3;
-const AMPM_ITEM_HEIGHT = 48;
-const AMPM_DRUM_HEIGHT = AMPM_VISIBLE * AMPM_ITEM_HEIGHT;
-const AMPM_CENTER = Math.floor(AMPM_VISIBLE / 2) * AMPM_ITEM_HEIGHT;
-const MONTH_MINUTES = 30 * 24 * 60;
+const AMPM_ITEM_HEIGHT = ITEM_HEIGHT;
+const AMPM_DRUM_HEIGHT = DRUM_HEIGHT;
+const AMPM_CENTER = CENTER_OFFSET;
 
 function AmPmDrum({ totalMinutes }: { totalMinutes: number }) {
-  const scrollPos = totalMinutes / 720;
+  const norm = normalizeMinutes(totalMinutes);
+  const currentValue = norm / 720;
+  const intIndex = Math.floor(currentValue);
+  const fraction = currentValue - intIndex;
 
-  const renderCount = AMPM_VISIBLE + 2;
+  const count = AMPM_ITEMS.length;
+  const renderCount = VISIBLE_COUNT + 4;
   const halfRender = Math.floor(renderCount / 2);
-  const intScroll = Math.floor(scrollPos);
-  const frac = scrollPos - intScroll;
 
   return (
     <div
       className="relative overflow-hidden touch-none select-none"
-      style={{ height: AMPM_DRUM_HEIGHT, width: 32 }}
+      style={{ height: AMPM_DRUM_HEIGHT, width: 36 }}
     >
       <div
         className="absolute inset-x-0 top-0 pointer-events-none z-20"
@@ -393,13 +393,14 @@ function AmPmDrum({ totalMinutes }: { totalMinutes: number }) {
 
       {Array.from({ length: renderCount }, (_, i) => {
         const offset = i - halfRender;
-        const itemIdx = ((intScroll + offset) % 2 + 200) % 2;
-        const y = (offset - frac) * AMPM_ITEM_HEIGHT + AMPM_CENTER;
+        const itemIdx = ((intIndex + offset) % count + count) % count;
+        const y = (offset - fraction) * AMPM_ITEM_HEIGHT + AMPM_CENTER;
 
         if (y < -AMPM_ITEM_HEIGHT || y > AMPM_DRUM_HEIGHT + AMPM_ITEM_HEIGHT) return null;
 
-        const distFromCenter = Math.abs(offset - frac);
-        const opacity = Math.max(0.08, 1 - distFromCenter * 1.2);
+        const distFromCenter = Math.abs(offset - fraction);
+        const opacity = Math.max(0.08, 1 - distFromCenter * 0.6);
+        const scale = Math.max(0.7, 1 - distFromCenter * 0.08);
 
         return (
           <div
@@ -407,7 +408,7 @@ function AmPmDrum({ totalMinutes }: { totalMinutes: number }) {
             className="absolute inset-x-0 flex items-center justify-center"
             style={{
               height: AMPM_ITEM_HEIGHT,
-              transform: `translateY(${y}px)`,
+              transform: `translateY(${y}px) scale(${scale})`,
               opacity,
               willChange: "transform, opacity",
             }}
