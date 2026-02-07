@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { ChevronLeft, ChevronRight, Plus, X, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, X, Trash2, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
@@ -229,6 +229,9 @@ export default function LogPage({ initialDate }: LogPageProps) {
             onChange={setBedtime}
             testId="input-bedtime"
           />
+        </div>
+
+        <div className="mt-3 rounded-md border border-primary/20 bg-primary/[0.04] px-4">
           <TimeRow
             label="Fell asleep"
             value={sleepTime}
@@ -240,6 +243,7 @@ export default function LogPage({ initialDate }: LogPageProps) {
             value={wakeTime}
             onChange={setWakeTime}
             testId="input-wake-time"
+            noBorder
           />
         </div>
       </div>
@@ -297,12 +301,22 @@ export default function LogPage({ initialDate }: LogPageProps) {
       <div className="mb-6 mt-4">
         <div className="flex items-center justify-between mb-3">
           <SectionLabel className="mb-0">Nap</SectionLabel>
-          <Switch
-            checked={hasNap}
-            onCheckedChange={setHasNap}
-            data-testid="switch-nap"
-          />
+          {!hasNap && (
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={() => setHasNap(true)}
+              data-testid="button-add-nap"
+            >
+              <Plus className="w-4 h-4" />
+            </Button>
+          )}
         </div>
+
+        {!hasNap && (
+          <div className="text-sm text-muted-foreground/40 py-2">None</div>
+        )}
+
         {hasNap && (
           <div className="flex items-center gap-3 py-3 border-b border-border/15">
             <input
@@ -320,6 +334,15 @@ export default function LogPage({ initialDate }: LogPageProps) {
               className="bg-transparent text-base font-light text-foreground tabular-nums focus:outline-none"
               data-testid="input-nap-end"
             />
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={() => setHasNap(false)}
+              className="ml-auto"
+              data-testid="button-remove-nap"
+            >
+              <X className="w-4 h-4" />
+            </Button>
           </div>
         )}
       </div>
@@ -383,7 +406,7 @@ export default function LogPage({ initialDate }: LogPageProps) {
         </div>
 
         <div className="flex items-center justify-between py-4 border-b border-border/15">
-          <span className="text-sm text-foreground">Cannabis</span>
+          <span className="text-sm text-foreground">Spliffs</span>
           <Switch
             checked={weed}
             onCheckedChange={setWeed}
@@ -392,7 +415,7 @@ export default function LogPage({ initialDate }: LogPageProps) {
         </div>
 
         <div className="flex items-center justify-between py-4 border-b border-border/15">
-          <span className="text-sm text-foreground">Insights</span>
+          <span className="text-sm text-foreground">Other</span>
           <Switch
             checked={insights}
             onCheckedChange={setInsights}
@@ -402,17 +425,23 @@ export default function LogPage({ initialDate }: LogPageProps) {
 
         <div className="py-4">
           <div className="text-sm text-foreground mb-3">Next-day feeling</div>
-          <div className="flex gap-2">
+          <div className="flex gap-1 justify-center">
             {[1, 2, 3, 4, 5].map((n) => (
-              <Button
+              <button
                 key={n}
-                variant={feeling === n ? "default" : "ghost"}
-                className="flex-1"
                 onClick={() => setFeeling(n)}
+                className="p-1.5 transition-colors"
                 data-testid={`button-feeling-${n}`}
               >
-                {n}
-              </Button>
+                <Star
+                  className={cn(
+                    "w-7 h-7 transition-colors",
+                    n <= feeling
+                      ? "fill-primary text-primary"
+                      : "fill-none text-muted-foreground/30"
+                  )}
+                />
+              </button>
             ))}
           </div>
           <div className="flex justify-between text-[10px] text-muted-foreground/50 mt-2 px-1">
@@ -479,14 +508,16 @@ function TimeRow({
   value,
   onChange,
   testId,
+  noBorder,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   testId: string;
+  noBorder?: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between py-4 border-b border-border/15">
+    <div className={cn("flex items-center justify-between py-4", !noBorder && "border-b border-border/15")}>
       <label className="text-sm text-muted-foreground">{label}</label>
       <input
         type="time"

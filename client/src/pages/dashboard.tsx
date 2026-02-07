@@ -325,8 +325,8 @@ export default function DashboardPage() {
 
               {correlations.weed && (
                 <CorrelationBlock
-                  title="Cannabis"
-                  withLabel="With cannabis"
+                  title="Spliffs"
+                  withLabel="With spliffs"
                   withData={correlations.weed.with}
                   withoutLabel="Without"
                   withoutData={correlations.weed.without}
