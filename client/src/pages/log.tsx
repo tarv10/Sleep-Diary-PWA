@@ -630,9 +630,7 @@ const NAP_EXPONENT = Math.log(0.25) / Math.log(0.6);
 
 function napSliderToMinutes(pos: number): number {
   if (pos <= 0) return 0;
-  const raw = NAP_MAX * Math.pow(pos, NAP_EXPONENT);
-  if (raw <= 45) return Math.round(raw / 5) * 5;
-  return Math.round(raw / 15) * 15;
+  return Math.round(NAP_MAX * Math.pow(pos, NAP_EXPONENT));
 }
 
 function napMinutesToSlider(min: number): number {
