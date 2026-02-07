@@ -354,10 +354,10 @@ function Drum({ type, totalMinutes, currentValue, items, onTouchStart, onWheel, 
 
       {ampm && (
         <div
-          className="absolute right-1 flex items-end pointer-events-none z-30"
-          style={{ top: CENTER_OFFSET, height: ITEM_HEIGHT, paddingBottom: 12 }}
+          className="absolute flex items-end pointer-events-none z-30"
+          style={{ top: CENTER_OFFSET, height: ITEM_HEIGHT, paddingBottom: 14, right: -2 }}
         >
-          <span className="text-xs font-medium text-foreground/40">
+          <span className="text-lg font-medium text-foreground/40">
             {ampm}
           </span>
         </div>
