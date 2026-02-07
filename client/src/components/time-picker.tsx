@@ -319,7 +319,7 @@ function Drum({ type, totalMinutes, currentValue, items, onTouchStart, onWheel }
           >
             <span className={cn(
               "tabular-nums text-foreground",
-              isHour ? "text-6xl font-semibold" : "text-5xl font-light"
+              isHour ? "text-6xl font-semibold" : "text-4xl font-light"
             )}>
               {items[itemIndex].toString().padStart(2, "0")}
             </span>
