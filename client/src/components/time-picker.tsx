@@ -367,11 +367,6 @@ function AmPmDrum({ totalMinutes }: { totalMinutes: number }) {
   const norm = normalizeMinutes(totalMinutes);
   const continuousValue = norm / 720 * 0.7;
 
-  const hour24 = Math.floor(norm / 60);
-  const ownerIdx = hour24 < 12 ? 0 : 1;
-  const minuteInHalf = norm % 720;
-  const progressInHalf = minuteInHalf / 720;
-
   const count = AMPM_ITEMS.length;
   const intIndex = Math.floor(continuousValue);
   const frac = continuousValue - intIndex;
@@ -406,13 +401,8 @@ function AmPmDrum({ totalMinutes }: { totalMinutes: number }) {
 
         if (y < -AMPM_ITEM_HEIGHT || y > AMPM_DRUM_HEIGHT + AMPM_ITEM_HEIGHT) return null;
 
-        let opacity: number;
-        if (itemIdx === ownerIdx) {
-          opacity = 1;
-        } else {
-          const fade = progressInHalf > 0.75 ? (progressInHalf - 0.75) * 4 : 0;
-          opacity = 0.12 + fade * 0.5;
-        }
+        const distFromCenter = Math.abs(offset - frac);
+        const opacity = Math.max(0.08, 1 - distFromCenter * 1.2);
 
         return (
           <div
