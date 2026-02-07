@@ -37,7 +37,6 @@ export default function LogPage({ initialDate }: LogPageProps) {
   const [nightWakings, setNightWakings] = useState<NightWaking[]>([]);
   const [hasNap, setHasNap] = useState(false);
   const [napMinutes, setNapMinutes] = useState(30);
-  const [napDisplay, setNapDisplay] = useState(30);
   const [drinks, setDrinks] = useState(0);
   const [weed, setWeed] = useState(false);
   const [insights, setInsights] = useState(false);
@@ -74,12 +73,9 @@ export default function LogPage({ initialDate }: LogPageProps) {
       if (entry.napStart && entry.napEnd) {
         const [sh, sm] = entry.napStart.split(":").map(Number);
         const [eh, em] = entry.napEnd.split(":").map(Number);
-        const nm = Math.max(0, (eh * 60 + em) - (sh * 60 + sm));
-        setNapMinutes(nm);
-        setNapDisplay(nm);
+        setNapMinutes(Math.max(0, (eh * 60 + em) - (sh * 60 + sm)));
       } else {
         setNapMinutes(30);
-        setNapDisplay(30);
       }
       setDrinks(entry.drinks);
       setWeed(entry.weed);
@@ -94,7 +90,6 @@ export default function LogPage({ initialDate }: LogPageProps) {
       setNightWakings([]);
       setHasNap(false);
       setNapMinutes(30);
-      setNapDisplay(30);
       setDrinks(0);
       setWeed(false);
       setInsights(false);
@@ -402,7 +397,7 @@ export default function LogPage({ initialDate }: LogPageProps) {
           <div className="py-3 border-b border-zone-disruption/10">
             <div className="flex items-center justify-between mb-3">
               <span className="text-2xl font-light text-foreground/80 tabular-nums" data-testid="text-nap-duration">
-                {formatDuration(napDisplay)}
+                {formatDuration(napMinutes)}
               </span>
               <Button
                 size="icon"
@@ -413,7 +408,7 @@ export default function LogPage({ initialDate }: LogPageProps) {
                 <X className="w-4 h-4" />
               </Button>
             </div>
-            <NapSlider value={napMinutes} onChange={(v) => { setNapMinutes(v); setNapDisplay(v); }} onDisplayChange={setNapDisplay} />
+            <NapSlider value={napMinutes} onChange={setNapMinutes} />
           </div>
         )}
       </div>
@@ -678,7 +673,7 @@ function snapMinutes(raw: number): number {
   return Math.round(raw / 15) * 15;
 }
 
-function NapSlider({ value, onChange, onDisplayChange }: { value: number; onChange: (v: number) => void; onDisplayChange?: (v: number) => void }) {
+function NapSlider({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [dragging, setDragging] = useState(false);
   const [rawValue, setRawValue] = useState(value);
@@ -698,21 +693,16 @@ function NapSlider({ value, onChange, onDisplayChange }: { value: number; onChan
     const raw = posToRaw(e.touches[0].clientX);
     setDragging(true);
     setRawValue(raw);
-    onDisplayChange?.(Math.round(raw));
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
     e.preventDefault();
-    const raw = posToRaw(e.touches[0].clientX);
-    setRawValue(raw);
-    onDisplayChange?.(Math.round(raw));
+    setRawValue(posToRaw(e.touches[0].clientX));
   };
 
   const handleTouchEnd = () => {
     setDragging(false);
-    const snapped = snapMinutes(rawValue);
-    onChange(snapped);
-    onDisplayChange?.(snapped);
+    onChange(snapMinutes(rawValue));
   };
 
   const handleClick = (e: React.MouseEvent) => {
@@ -754,8 +744,7 @@ function NapSlider({ value, onChange, onDisplayChange }: { value: number; onChan
           className="absolute w-5 h-5 rounded-full -translate-x-1/2"
           style={{
             left: `${pct}%`,
-            background: "var(--zone-disruption)",
-            boxShadow: "0 0 0 2px rgba(255,255,255,0.2)",
+            background: "#e2e8f0",
             transition: dragging ? "none" : "left 0.15s ease-out",
           }}
         />
