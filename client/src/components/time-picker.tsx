@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { cn } from "@/lib/utils";
 
-const ITEM_HEIGHT = 56;
+const ITEM_HEIGHT = 72;
 const VISIBLE_COUNT = 5;
 const DRUM_HEIGHT = VISIBLE_COUNT * ITEM_HEIGHT;
 const CENTER_OFFSET = Math.floor(VISIBLE_COUNT / 2) * ITEM_HEIGHT;
@@ -189,7 +189,7 @@ export default function TimePicker({ value, onChange, onClose, label }: TimePick
           </div>
         )}
 
-        <div className="flex items-center justify-center gap-0 px-8 py-4">
+        <div className="flex items-center justify-center gap-0 px-4 py-4">
           <Drum
             type="hour"
             totalMinutes={totalMinutes}
@@ -199,7 +199,7 @@ export default function TimePicker({ value, onChange, onClose, label }: TimePick
             onWheel={handleWheel("hour")}
           />
 
-          <div className="text-3xl font-light text-foreground/30 px-2 select-none">:</div>
+          <div className="text-5xl font-light text-foreground/20 select-none -mx-1">:</div>
 
           <Drum
             type="minute"
@@ -319,7 +319,7 @@ function Drum({ type, totalMinutes, currentValue, items, onTouchStart, onWheel }
           >
             <span className={cn(
               "tabular-nums text-foreground",
-              isHour ? "text-4xl font-semibold" : "text-2xl font-light"
+              isHour ? "text-6xl font-semibold" : "text-5xl font-light"
             )}>
               {items[itemIndex].toString().padStart(2, "0")}
             </span>
