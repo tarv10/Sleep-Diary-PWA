@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import TimePicker from "@/components/time-picker";
 import type { SleepEntry, NightWaking } from "@shared/schema";
 import {
   getEntryByDate,
@@ -44,6 +45,12 @@ export default function LogPage({ initialDate }: LogPageProps) {
   const [notes, setNotes] = useState("");
   const [existingId, setExistingId] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [activePicker, setActivePicker] = useState<{
+    field: string;
+    value: string;
+    label: string;
+    onChange: (v: string) => void;
+  } | null>(null);
 
   const selectedParsed = parseDate(date);
   const [calYear, setCalYear] = useState(selectedParsed.getFullYear());
@@ -206,7 +213,7 @@ export default function LogPage({ initialDate }: LogPageProps) {
   });
 
   return (
-    <div className="flex flex-col min-h-full px-5 pt-6 pb-24">
+    <div className="flex flex-col min-h-full px-5 pb-24" style={{ paddingTop: "max(1.5rem, calc(env(safe-area-inset-top) + 0.75rem))" }}>
       {/* ── Date ── */}
       <div className="mb-6">
         <button
@@ -284,21 +291,21 @@ export default function LogPage({ initialDate }: LogPageProps) {
         <TimeRow
           label="Bedtime"
           value={bedtime}
-          onChange={setBedtime}
+          onTap={() => setActivePicker({ field: "bedtime", value: bedtime, label: "Bedtime", onChange: setBedtime })}
           testId="input-bedtime"
           zone="sleep"
         />
         <TimeRow
           label="Fell asleep"
           value={sleepTime}
-          onChange={setSleepTime}
+          onTap={() => setActivePicker({ field: "sleepTime", value: sleepTime, label: "Fell asleep", onChange: setSleepTime })}
           testId="input-sleep-time"
           zone="sleep"
         />
         <TimeRow
           label="Woke up"
           value={wakeTime}
-          onChange={setWakeTime}
+          onTap={() => setActivePicker({ field: "wakeTime", value: wakeTime, label: "Woke up", onChange: setWakeTime })}
           testId="input-wake-time"
           zone="sleep"
           noBorder
@@ -328,21 +335,21 @@ export default function LogPage({ initialDate }: LogPageProps) {
             key={w.id}
             className="flex items-center gap-3 py-3 border-b border-zone-disruption/10"
           >
-            <input
-              type="time"
-              value={w.start}
-              onChange={(e) => updateWaking(w.id, "start", e.target.value)}
-              className="bg-transparent text-lg font-light text-foreground/80 tabular-nums focus:outline-none [color-scheme:dark]"
+            <button
+              onClick={() => setActivePicker({ field: `waking-start-${w.id}`, value: w.start, label: "Waking start", onChange: (v) => updateWaking(w.id, "start", v) })}
+              className="bg-transparent text-lg font-light text-foreground/80 tabular-nums"
               data-testid={`input-waking-start-${w.id}`}
-            />
+            >
+              {w.start}
+            </button>
             <span className="text-zone-disruption-muted/40 text-sm">—</span>
-            <input
-              type="time"
-              value={w.end}
-              onChange={(e) => updateWaking(w.id, "end", e.target.value)}
-              className="bg-transparent text-lg font-light text-foreground/80 tabular-nums focus:outline-none [color-scheme:dark]"
+            <button
+              onClick={() => setActivePicker({ field: `waking-end-${w.id}`, value: w.end, label: "Waking end", onChange: (v) => updateWaking(w.id, "end", v) })}
+              className="bg-transparent text-lg font-light text-foreground/80 tabular-nums"
               data-testid={`input-waking-end-${w.id}`}
-            />
+            >
+              {w.end}
+            </button>
             <Button
               size="icon"
               variant="ghost"
@@ -378,21 +385,21 @@ export default function LogPage({ initialDate }: LogPageProps) {
 
         {hasNap && (
           <div className="flex items-center gap-3 py-3 border-b border-zone-disruption/10">
-            <input
-              type="time"
-              value={napStart}
-              onChange={(e) => setNapStart(e.target.value)}
-              className="bg-transparent text-lg font-light text-foreground/80 tabular-nums focus:outline-none [color-scheme:dark]"
+            <button
+              onClick={() => setActivePicker({ field: "napStart", value: napStart, label: "Nap start", onChange: setNapStart })}
+              className="bg-transparent text-lg font-light text-foreground/80 tabular-nums"
               data-testid="input-nap-start"
-            />
+            >
+              {napStart}
+            </button>
             <span className="text-zone-disruption-muted/40 text-sm">—</span>
-            <input
-              type="time"
-              value={napEnd}
-              onChange={(e) => setNapEnd(e.target.value)}
-              className="bg-transparent text-lg font-light text-foreground/80 tabular-nums focus:outline-none [color-scheme:dark]"
+            <button
+              onClick={() => setActivePicker({ field: "napEnd", value: napEnd, label: "Nap end", onChange: setNapEnd })}
+              className="bg-transparent text-lg font-light text-foreground/80 tabular-nums"
               data-testid="input-nap-end"
-            />
+            >
+              {napEnd}
+            </button>
             <Button
               size="icon"
               variant="ghost"
@@ -573,6 +580,18 @@ export default function LogPage({ initialDate }: LogPageProps) {
           )}
         </Button>
       </div>
+
+      {activePicker && (
+        <TimePicker
+          value={activePicker.value}
+          label={activePicker.label}
+          onChange={(v) => {
+            activePicker.onChange(v);
+            setActivePicker(null);
+          }}
+          onClose={() => setActivePicker(null)}
+        />
+      )}
     </div>
   );
 }
@@ -609,31 +628,29 @@ function ZoneLabel({
 function TimeRow({
   label,
   value,
-  onChange,
+  onTap,
   testId,
   noBorder,
   zone,
 }: {
   label: string;
   value: string;
-  onChange: (v: string) => void;
+  onTap: () => void;
   testId: string;
   noBorder?: boolean;
   zone?: "sleep" | "disruption";
 }) {
   return (
-    <div className={cn(
-      "flex items-center justify-between py-3",
-      !noBorder && (zone === "sleep" ? "border-b border-zone-sleep/8" : "border-b border-border/10")
-    )}>
-      <label className="text-sm text-foreground/50">{label}</label>
-      <input
-        type="time"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="bg-transparent text-2xl font-light text-foreground tabular-nums text-right focus:outline-none [color-scheme:dark]"
-        data-testid={testId}
-      />
-    </div>
+    <button
+      onClick={onTap}
+      className={cn(
+        "flex items-center justify-between py-3 w-full text-left",
+        !noBorder && (zone === "sleep" ? "border-b border-zone-sleep/8" : "border-b border-border/10")
+      )}
+      data-testid={testId}
+    >
+      <span className="text-sm text-foreground/50">{label}</span>
+      <span className="text-2xl font-light text-foreground tabular-nums">{value}</span>
+    </button>
   );
 }

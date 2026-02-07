@@ -18,6 +18,7 @@ A mobile-first sleep diary Progressive Web App optimized for iPhone Safari "Add 
 - `client/src/pages/dashboard.tsx` - Stats with hero metrics, charts, correlations
 - `client/src/pages/settings.tsx` - PIN lock, CSV export, data management
 - `client/src/components/pin-lock.tsx` - PIN lock screen overlay
+- `client/src/components/time-picker.tsx` - Linked dual-drum time picker (quarter-hour)
 - `client/src/App.tsx` - Routing and bottom navigation
 - `client/public/manifest.json` - PWA manifest
 - `client/public/sw.js` - Service worker
@@ -38,7 +39,7 @@ Each zone has three variants in CSS: `--zone-{name}` (label), `--zone-{name}-mut
 - Background: #0D1117 (dark blue-black with warmth/depth)
 - Primary accent: warm amber (hsl 35)
 - Font: Inter
-- Native time/date inputs for iOS drum roller pickers
+- Custom linked dual-drum time picker (quarter-hour increments: 00, 15, 30, 45)
 - Bottom tab navigation (Log, History, Stats, More)
 
 ### Typography Hierarchy
