@@ -37,6 +37,7 @@ export default function LogPage({ initialDate }: LogPageProps) {
   const [nightWakings, setNightWakings] = useState<NightWaking[]>([]);
   const [hasNap, setHasNap] = useState(false);
   const [napMinutes, setNapMinutes] = useState(30);
+  const [napDisplay, setNapDisplay] = useState(30);
   const [drinks, setDrinks] = useState(0);
   const [weed, setWeed] = useState(false);
   const [insights, setInsights] = useState(false);
@@ -73,9 +74,12 @@ export default function LogPage({ initialDate }: LogPageProps) {
       if (entry.napStart && entry.napEnd) {
         const [sh, sm] = entry.napStart.split(":").map(Number);
         const [eh, em] = entry.napEnd.split(":").map(Number);
-        setNapMinutes(Math.max(0, (eh * 60 + em) - (sh * 60 + sm)));
+        const nm = Math.max(0, (eh * 60 + em) - (sh * 60 + sm));
+        setNapMinutes(nm);
+        setNapDisplay(nm);
       } else {
         setNapMinutes(30);
+        setNapDisplay(30);
       }
       setDrinks(entry.drinks);
       setWeed(entry.weed);
@@ -90,6 +94,7 @@ export default function LogPage({ initialDate }: LogPageProps) {
       setNightWakings([]);
       setHasNap(false);
       setNapMinutes(30);
+      setNapDisplay(30);
       setDrinks(0);
       setWeed(false);
       setInsights(false);
@@ -397,7 +402,7 @@ export default function LogPage({ initialDate }: LogPageProps) {
           <div className="py-3 border-b border-zone-disruption/10">
             <div className="flex items-center justify-between mb-3">
               <span className="text-2xl font-light text-foreground/80 tabular-nums" data-testid="text-nap-duration">
-                {formatDuration(napMinutes)}
+                {formatDuration(napDisplay)}
               </span>
               <Button
                 size="icon"
@@ -408,7 +413,7 @@ export default function LogPage({ initialDate }: LogPageProps) {
                 <X className="w-4 h-4" />
               </Button>
             </div>
-            <NapSlider value={napMinutes} onChange={setNapMinutes} />
+            <NapSlider value={napMinutes} onChange={(v) => { setNapMinutes(v); setNapDisplay(v); }} onDisplayChange={setNapDisplay} />
           </div>
         )}
       </div>
@@ -649,30 +654,70 @@ function napMinutesToSlider(min: number): number {
   return 0.5 + 0.5 * t;
 }
 
-function NapSlider({ value, onChange }: { value: number; onChange: (v: number) => void }) {
-  const trackRef = useRef<HTMLDivElement>(null);
-  const pct = napMinutesToSlider(value) * 100;
+function napSliderToRaw(pos: number): number {
+  if (pos <= 0) return 0;
+  if (pos <= 0.5) {
+    return 45 * Math.pow(pos / 0.5, 1.5);
+  }
+  const t = (pos - 0.5) / 0.5;
+  return 45 + 135 * Math.pow(t, 1.8);
+}
 
-  const posToMinutes = (clientX: number) => {
+function napRawToSlider(min: number): number {
+  if (min <= 0) return 0;
+  if (min <= 45) {
+    return 0.5 * Math.pow(min / 45, 1 / 1.5);
+  }
+  const t = Math.pow((min - 45) / 135, 1 / 1.8);
+  return 0.5 + 0.5 * t;
+}
+
+function snapMinutes(raw: number): number {
+  if (raw <= 0) return 0;
+  if (raw <= 60) return Math.round(raw / 5) * 5;
+  return Math.round(raw / 15) * 15;
+}
+
+function NapSlider({ value, onChange, onDisplayChange }: { value: number; onChange: (v: number) => void; onDisplayChange?: (v: number) => void }) {
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [dragging, setDragging] = useState(false);
+  const [rawValue, setRawValue] = useState(value);
+
+  const pct = (dragging ? napRawToSlider(rawValue) : napMinutesToSlider(value)) * 100;
+
+  const posToRaw = (clientX: number): number => {
     const track = trackRef.current;
-    if (!track) return value;
+    if (!track) return rawValue;
     const rect = track.getBoundingClientRect();
     const pos = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-    return napSliderToMinutes(pos);
+    return napSliderToRaw(pos);
   };
 
-  const handleTouch = (e: React.TouchEvent) => {
+  const handleTouchStart = (e: React.TouchEvent) => {
     e.preventDefault();
-    onChange(posToMinutes(e.touches[0].clientX));
+    const raw = posToRaw(e.touches[0].clientX);
+    setDragging(true);
+    setRawValue(raw);
+    onDisplayChange?.(Math.round(raw));
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
     e.preventDefault();
-    onChange(posToMinutes(e.touches[0].clientX));
+    const raw = posToRaw(e.touches[0].clientX);
+    setRawValue(raw);
+    onDisplayChange?.(Math.round(raw));
+  };
+
+  const handleTouchEnd = () => {
+    setDragging(false);
+    const snapped = snapMinutes(rawValue);
+    onChange(snapped);
+    onDisplayChange?.(snapped);
   };
 
   const handleClick = (e: React.MouseEvent) => {
-    onChange(posToMinutes(e.clientX));
+    const raw = posToRaw(e.clientX);
+    onChange(snapMinutes(raw));
   };
 
   const ticks = [
@@ -690,15 +735,20 @@ function NapSlider({ value, onChange }: { value: number; onChange: (v: number) =
       <div
         ref={trackRef}
         className="relative h-10 flex items-center cursor-pointer select-none touch-none"
-        onTouchStart={handleTouch}
+        onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
         onClick={handleClick}
         data-testid="input-nap-slider"
       >
         <div className="absolute left-0 right-0 h-1 rounded-full bg-white/[0.06]" />
         <div
           className="absolute left-0 h-1 rounded-full"
-          style={{ width: `${pct}%`, background: "var(--zone-disruption)" }}
+          style={{
+            width: `${pct}%`,
+            background: "var(--zone-disruption)",
+            transition: dragging ? "none" : "width 0.15s ease-out",
+          }}
         />
         <div
           className="absolute w-5 h-5 rounded-full -translate-x-1/2"
@@ -706,6 +756,7 @@ function NapSlider({ value, onChange }: { value: number; onChange: (v: number) =
             left: `${pct}%`,
             background: "var(--zone-disruption)",
             boxShadow: "0 0 0 2px rgba(255,255,255,0.2)",
+            transition: dragging ? "none" : "left 0.15s ease-out",
           }}
         />
       </div>
