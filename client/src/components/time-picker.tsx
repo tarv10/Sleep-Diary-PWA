@@ -404,10 +404,20 @@ function AmPmDrum({ totalMinutes }: { totalMinutes: number }) {
 
         if (y < -AMPM_ITEM_HEIGHT || y > AMPM_DRUM_HEIGHT + AMPM_ITEM_HEIGHT) return null;
 
-        const distFromCenter = Math.abs(offset - frac);
-        const opacity = offset === 0 || (offset === 1 && frac > 0.5) || (offset === -1 && frac < 0.5)
-          ? Math.max(0.15, 1 - distFromCenter * 2)
-          : 0.08;
+        const isCurrentAmPm = itemIdx === ampmIndex;
+        const progressInHalf = minuteInHalf / 720;
+        let opacity: number;
+        if (isCurrentAmPm) {
+          opacity = 1;
+        } else {
+          const nextIdx = (ampmIndex + 1) % 2;
+          if (itemIdx === nextIdx) {
+            const fade = progressInHalf > 0.75 ? (progressInHalf - 0.75) * 4 : 0;
+            opacity = 0.12 + fade * 0.5;
+          } else {
+            opacity = 0.08;
+          }
+        }
 
         return (
           <div
