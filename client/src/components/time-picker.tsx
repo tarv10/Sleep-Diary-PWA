@@ -363,17 +363,17 @@ const AMPM_CENTER = CENTER_OFFSET;
 
 function AmPmDrum({ totalMinutes }: { totalMinutes: number }) {
   const norm = normalizeMinutes(totalMinutes);
-  const shifted = ((norm - 360) % 1440 + 1440) % 1440;
-  const currentValue = shifted / 720;
-  const intIndex = Math.floor(currentValue);
-  const fraction = currentValue - intIndex;
+  const scrollPos = ((norm - 360) % 1440 + 1440) % 1440 / 720;
 
   const isAM = norm < 720;
-  const activeIdx = isAM ? 0 : 1;
 
-  const count = AMPM_ITEMS.length;
-  const renderCount = VISIBLE_COUNT + 4;
-  const halfRender = Math.floor(renderCount / 2);
+  const nearestAm = Math.round(scrollPos / 2) * 2;
+  const nearestPm = Math.round((scrollPos - 1) / 2) * 2 + 1;
+
+  const items = [
+    { label: "am", pos: nearestAm, active: isAM },
+    { label: "pm", pos: nearestPm, active: !isAM },
+  ];
 
   return (
     <div
@@ -395,23 +395,20 @@ function AmPmDrum({ totalMinutes }: { totalMinutes: number }) {
         }}
       />
 
-      {Array.from({ length: renderCount }, (_, i) => {
-        const offset = i - halfRender;
-        const itemIdx = ((intIndex + offset) % count + count) % count;
-        const y = (offset - fraction) * AMPM_ITEM_HEIGHT + AMPM_CENTER;
+      {items.map(({ label, pos, active }) => {
+        const dist = pos - scrollPos;
+        const y = dist * AMPM_ITEM_HEIGHT + AMPM_CENTER;
 
         if (y < -AMPM_ITEM_HEIGHT || y > AMPM_DRUM_HEIGHT + AMPM_ITEM_HEIGHT) return null;
 
-        const distFromCenter = Math.abs(offset - fraction);
-        const spatial = Math.max(0.08, 1 - distFromCenter * 0.6);
-
-        const isActive = itemIdx === activeIdx;
-        const opacity = isActive ? spatial : spatial * 0.15;
-        const scale = Math.max(0.7, 1 - distFromCenter * 0.08);
+        const absDist = Math.abs(dist);
+        const spatial = Math.max(0.08, 1 - absDist * 0.6);
+        const opacity = active ? spatial : spatial * 0.15;
+        const scale = Math.max(0.7, 1 - absDist * 0.08);
 
         return (
           <div
-            key={i}
+            key={label}
             className="absolute inset-x-0 flex items-center justify-center"
             style={{
               height: AMPM_ITEM_HEIGHT,
@@ -422,7 +419,7 @@ function AmPmDrum({ totalMinutes }: { totalMinutes: number }) {
             }}
           >
             <span className="text-lg font-medium text-white">
-              {AMPM_ITEMS[itemIdx]}
+              {label}
             </span>
           </div>
         );
