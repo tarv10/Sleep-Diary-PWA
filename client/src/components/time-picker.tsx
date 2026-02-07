@@ -371,14 +371,6 @@ function AmPmDrum({ totalMinutes }: { totalMinutes: number }) {
   const isAM = norm < 720;
   const activeIdx = isAM ? 0 : 1;
 
-  const distFromTransition = Math.min(
-    Math.abs(norm - 720),
-    norm < 360 ? norm : Math.abs(1440 - norm)
-  );
-  const transitionWindow = 90;
-  const blend = Math.min(1, distFromTransition / transitionWindow);
-  const eased = blend * blend * (3 - 2 * blend);
-
   const count = AMPM_ITEMS.length;
   const renderCount = VISIBLE_COUNT + 4;
   const halfRender = Math.floor(renderCount / 2);
@@ -414,11 +406,7 @@ function AmPmDrum({ totalMinutes }: { totalMinutes: number }) {
         const spatial = Math.max(0.08, 1 - distFromCenter * 0.6);
 
         const isActive = itemIdx === activeIdx;
-        const activeFactor = isActive
-          ? 0.3 + 0.7 * eased
-          : 0.3 - 0.15 * eased;
-
-        const opacity = spatial * activeFactor;
+        const opacity = isActive ? spatial : spatial * 0.15;
         const scale = Math.max(0.7, 1 - distFromCenter * 0.08);
 
         return (
@@ -429,6 +417,7 @@ function AmPmDrum({ totalMinutes }: { totalMinutes: number }) {
               height: AMPM_ITEM_HEIGHT,
               transform: `translateY(${y}px) scale(${scale})`,
               opacity,
+              transition: "opacity 0.6s ease",
               willChange: "transform, opacity",
             }}
           >
