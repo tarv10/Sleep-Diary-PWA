@@ -134,7 +134,7 @@ export default function SettingsPage() {
 
   return (
     <div className="px-5 pt-6 pb-24">
-      <h1 className="text-2xl font-medium mb-8">Settings</h1>
+      <h1 className="text-2xl font-medium mb-8 tracking-tight">Settings</h1>
 
       <Section label="Security">
         <div className="flex items-center justify-between py-4">
@@ -320,10 +320,10 @@ function Section({
 }) {
   return (
     <div className="mb-8">
-      <div className="text-xs text-muted-foreground/50 uppercase tracking-[0.2em] font-medium mb-1">
+      <div className="text-[10px] text-muted-foreground/40 uppercase tracking-[0.2em] font-medium mb-1">
         {label}
       </div>
-      <div className="border-b border-border/10">{children}</div>
+      <div className="border-b border-border/8">{children}</div>
     </div>
   );
 }

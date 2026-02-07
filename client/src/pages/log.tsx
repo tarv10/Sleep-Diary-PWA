@@ -1,9 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
-import { ChevronLeft, ChevronRight, Plus, X, Trash2, Star } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, X, Trash2, Star, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import type { SleepEntry, NightWaking } from "@shared/schema";
 import {
@@ -29,7 +28,6 @@ interface LogPageProps {
 }
 
 export default function LogPage({ initialDate }: LogPageProps) {
-  const { toast } = useToast();
   const [date, setDate] = useState(initialDate || getYesterday());
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [bedtime, setBedtime] = useState("22:30");
@@ -45,6 +43,7 @@ export default function LogPage({ initialDate }: LogPageProps) {
   const [feeling, setFeeling] = useState(3);
   const [notes, setNotes] = useState("");
   const [existingId, setExistingId] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
 
   const selectedParsed = parseDate(date);
   const [calYear, setCalYear] = useState(selectedParsed.getFullYear());
@@ -130,7 +129,8 @@ export default function LogPage({ initialDate }: LogPageProps) {
     };
     saveEntry(entry);
     setExistingId(entry.id);
-    toast({ title: "Entry saved" });
+    setSaved(true);
+    setTimeout(() => setSaved(false), 1200);
   };
 
   const handleDelete = () => {
@@ -147,7 +147,6 @@ export default function LogPage({ initialDate }: LogPageProps) {
       setInsights(false);
       setFeeling(3);
       setNotes("");
-      toast({ title: "Entry deleted" });
     }
   };
 
@@ -208,24 +207,25 @@ export default function LogPage({ initialDate }: LogPageProps) {
 
   return (
     <div className="flex flex-col min-h-full px-5 pt-6 pb-24">
+      {/* ── Date ── */}
       <div className="mb-6">
         <button
           onClick={() => setCalendarOpen(!calendarOpen)}
           className="w-full text-center py-2"
           data-testid="button-date-picker"
         >
-          <div className="text-xl font-medium text-foreground">
+          <div className="text-xl font-medium text-foreground tracking-tight">
             {displayDateStr}
           </div>
           {existingId && (
-            <div className="text-xs text-muted-foreground/60 mt-0.5">
+            <div className="text-[10px] text-zone-sleep-muted mt-0.5 uppercase tracking-[0.15em]">
               saved
             </div>
           )}
         </button>
 
         {calendarOpen && (
-          <div className="mt-3 rounded-md border border-border/20 bg-card/60 p-4" data-testid="calendar-picker">
+          <div className="mt-3 rounded-md border border-border/30 bg-zone-sleep-bg p-4" data-testid="calendar-picker">
             <div className="flex items-center justify-between mb-4">
               <Button size="icon" variant="ghost" onClick={prevMonth} data-testid="button-cal-prev">
                 <ChevronLeft className="w-5 h-5" />
@@ -240,7 +240,7 @@ export default function LogPage({ initialDate }: LogPageProps) {
 
             <div className="grid grid-cols-7 gap-0">
               {dayHeaders.map((d) => (
-                <div key={d} className="text-center text-xs text-muted-foreground/40 pb-2 font-medium">
+                <div key={d} className="text-center text-[10px] text-zone-disruption-muted pb-2 font-medium uppercase">
                   {d}
                 </div>
               ))}
@@ -258,17 +258,17 @@ export default function LogPage({ initialDate }: LogPageProps) {
                     disabled={isFutureDay}
                     className={cn(
                       "relative flex flex-col items-center justify-center py-2 text-sm transition-colors",
-                      !isCurrentMonth && "opacity-25",
-                      isFutureDay && "opacity-15 cursor-not-allowed",
-                      isSelected && "bg-primary/20 rounded-md text-primary font-medium",
-                      !isSelected && isCurrentMonth && !isFutureDay && "text-foreground",
-                      isToday && !isSelected && "text-primary"
+                      !isCurrentMonth && "opacity-20",
+                      isFutureDay && "opacity-10 cursor-not-allowed",
+                      isSelected && "bg-zone-sleep/15 rounded-md text-zone-sleep font-medium",
+                      !isSelected && isCurrentMonth && !isFutureDay && "text-foreground/80",
+                      isToday && !isSelected && "text-zone-sleep"
                     )}
                     data-testid={`cal-day-${cd.date}`}
                   >
                     <span>{cd.day}</span>
                     {hasEntry && !isSelected && (
-                      <div className="absolute bottom-0.5 w-1 h-1 rounded-full bg-primary/60" />
+                      <div className="absolute bottom-0.5 w-1 h-1 rounded-full bg-zone-sleep/50" />
                     )}
                   </button>
                 );
@@ -278,69 +278,69 @@ export default function LogPage({ initialDate }: LogPageProps) {
         )}
       </div>
 
-      <div className="mb-2">
-        <SectionLabel>Times</SectionLabel>
-        <div className="space-y-0">
-          <TimeRow
-            label="Bedtime"
-            value={bedtime}
-            onChange={setBedtime}
-            testId="input-bedtime"
-          />
-        </div>
-
-        <div className="mt-3 rounded-md border border-primary/20 bg-primary/[0.04] px-4">
-          <TimeRow
-            label="Fell asleep"
-            value={sleepTime}
-            onChange={setSleepTime}
-            testId="input-sleep-time"
-          />
-          <TimeRow
-            label="Woke up"
-            value={wakeTime}
-            onChange={setWakeTime}
-            testId="input-wake-time"
-            noBorder
-          />
-        </div>
+      {/* ── The Night (Sleep Zone) ── */}
+      <div className="mb-2 rounded-md bg-zone-sleep-bg/60 px-4 -mx-1">
+        <ZoneLabel color="sleep">The Night</ZoneLabel>
+        <TimeRow
+          label="Bedtime"
+          value={bedtime}
+          onChange={setBedtime}
+          testId="input-bedtime"
+          zone="sleep"
+        />
+        <TimeRow
+          label="Fell asleep"
+          value={sleepTime}
+          onChange={setSleepTime}
+          testId="input-sleep-time"
+          zone="sleep"
+        />
+        <TimeRow
+          label="Woke up"
+          value={wakeTime}
+          onChange={setWakeTime}
+          testId="input-wake-time"
+          zone="sleep"
+          noBorder
+        />
       </div>
 
-      <div className="mb-2 mt-6">
-        <div className="flex items-center justify-between mb-3">
-          <SectionLabel className="mb-0">Night wakings</SectionLabel>
+      {/* ── Disruptions (Disruption Zone) ── */}
+      <div className="mt-6 mb-2">
+        <div className="flex items-center justify-between">
+          <ZoneLabel color="disruption" className="mb-0">Disruptions</ZoneLabel>
           <Button
             size="icon"
             variant="ghost"
             onClick={addNightWaking}
             data-testid="button-add-waking"
           >
-            <Plus className="w-5 h-5" />
+            <Plus className="w-4 h-4 text-zone-disruption-muted" />
           </Button>
         </div>
 
         {nightWakings.length === 0 && (
-          <div className="text-base text-muted-foreground/40 py-2">None</div>
+          <div className="text-sm text-zone-disruption-muted/50 py-2">None</div>
         )}
 
         {nightWakings.map((w) => (
           <div
             key={w.id}
-            className="flex items-center gap-3 py-3 border-b border-border/15"
+            className="flex items-center gap-3 py-3 border-b border-zone-disruption/10"
           >
             <input
               type="time"
               value={w.start}
               onChange={(e) => updateWaking(w.id, "start", e.target.value)}
-              className="bg-transparent text-lg font-light text-foreground tabular-nums focus:outline-none [color-scheme:dark]"
+              className="bg-transparent text-lg font-light text-foreground/80 tabular-nums focus:outline-none [color-scheme:dark]"
               data-testid={`input-waking-start-${w.id}`}
             />
-            <span className="text-muted-foreground/40 text-sm">—</span>
+            <span className="text-zone-disruption-muted/40 text-sm">—</span>
             <input
               type="time"
               value={w.end}
               onChange={(e) => updateWaking(w.id, "end", e.target.value)}
-              className="bg-transparent text-lg font-light text-foreground tabular-nums focus:outline-none [color-scheme:dark]"
+              className="bg-transparent text-lg font-light text-foreground/80 tabular-nums focus:outline-none [color-scheme:dark]"
               data-testid={`input-waking-end-${w.id}`}
             />
             <Button
@@ -350,15 +350,16 @@ export default function LogPage({ initialDate }: LogPageProps) {
               className="ml-auto"
               data-testid={`button-remove-waking-${w.id}`}
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </Button>
           </div>
         ))}
       </div>
 
-      <div className="mb-6 mt-4">
-        <div className="flex items-center justify-between mb-3">
-          <SectionLabel className="mb-0">Nap</SectionLabel>
+      {/* ── Nap (Disruption Zone) ── */}
+      <div className="mb-2 mt-4">
+        <div className="flex items-center justify-between">
+          <ZoneLabel color="disruption" className="mb-0">Nap</ZoneLabel>
           {!hasNap && (
             <Button
               size="icon"
@@ -366,30 +367,30 @@ export default function LogPage({ initialDate }: LogPageProps) {
               onClick={() => setHasNap(true)}
               data-testid="button-add-nap"
             >
-              <Plus className="w-5 h-5" />
+              <Plus className="w-4 h-4 text-zone-disruption-muted" />
             </Button>
           )}
         </div>
 
         {!hasNap && (
-          <div className="text-base text-muted-foreground/40 py-2">None</div>
+          <div className="text-sm text-zone-disruption-muted/50 py-2">None</div>
         )}
 
         {hasNap && (
-          <div className="flex items-center gap-3 py-3 border-b border-border/15">
+          <div className="flex items-center gap-3 py-3 border-b border-zone-disruption/10">
             <input
               type="time"
               value={napStart}
               onChange={(e) => setNapStart(e.target.value)}
-              className="bg-transparent text-lg font-light text-foreground tabular-nums focus:outline-none [color-scheme:dark]"
+              className="bg-transparent text-lg font-light text-foreground/80 tabular-nums focus:outline-none [color-scheme:dark]"
               data-testid="input-nap-start"
             />
-            <span className="text-muted-foreground/40 text-sm">—</span>
+            <span className="text-zone-disruption-muted/40 text-sm">—</span>
             <input
               type="time"
               value={napEnd}
               onChange={(e) => setNapEnd(e.target.value)}
-              className="bg-transparent text-lg font-light text-foreground tabular-nums focus:outline-none [color-scheme:dark]"
+              className="bg-transparent text-lg font-light text-foreground/80 tabular-nums focus:outline-none [color-scheme:dark]"
               data-testid="input-nap-end"
             />
             <Button
@@ -399,72 +400,96 @@ export default function LogPage({ initialDate }: LogPageProps) {
               className="ml-auto"
               data-testid="button-remove-nap"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </Button>
           </div>
         )}
       </div>
 
-      <div className="py-6 mb-6 border-t border-b border-border/15">
-        <div className="grid grid-cols-3 gap-4">
-          <MetricDisplay
-            label="In bed"
-            value={formatDuration(metrics.timeInBed)}
-          />
-          <MetricDisplay
-            label="Asleep"
-            value={formatDuration(metrics.totalSleep)}
-          />
-          <MetricDisplay
-            label="Efficiency"
-            value={formatEfficiency(metrics.sleepEfficiency)}
-            accent
-          />
+      {/* ── Metrics Strip (Hero) ── */}
+      <div className="mt-8 mb-8">
+        <div className="flex items-baseline justify-center gap-6">
+          <div className="text-center">
+            <div
+              className="text-4xl font-light tabular-nums text-foreground tracking-tight"
+              data-testid="metric-asleep"
+            >
+              {formatDuration(metrics.totalSleep)}
+            </div>
+            <div className="text-[10px] text-muted-foreground/40 mt-1 uppercase tracking-[0.2em]">
+              Asleep
+            </div>
+          </div>
+          <div className="w-px h-8 bg-border/20" />
+          <div className="text-center">
+            <div
+              className="text-2xl font-light tabular-nums text-zone-sleep"
+              data-testid="metric-efficiency"
+            >
+              {formatEfficiency(metrics.sleepEfficiency)}
+            </div>
+            <div className="text-[10px] text-muted-foreground/40 mt-1 uppercase tracking-[0.2em]">
+              Efficiency
+            </div>
+          </div>
+          <div className="w-px h-8 bg-border/20" />
+          <div className="text-center">
+            <div
+              className="text-2xl font-light tabular-nums text-foreground/60"
+              data-testid="metric-in-bed"
+            >
+              {formatDuration(metrics.timeInBed)}
+            </div>
+            <div className="text-[10px] text-muted-foreground/40 mt-1 uppercase tracking-[0.2em]">
+              In bed
+            </div>
+          </div>
         </div>
         {metrics.napDuration > 0 && (
-          <div className="mt-4 text-center">
-            <span className="text-sm text-muted-foreground/60">
-              +{formatDuration(metrics.napDuration)} nap ·{" "}
-              {formatDuration(metrics.adjustedTotal)} total
+          <div className="mt-3 text-center">
+            <span className="text-xs text-zone-disruption-muted/60">
+              +{formatDuration(metrics.napDuration)} nap · {formatDuration(metrics.adjustedTotal)} total
             </span>
           </div>
         )}
       </div>
 
-      <div className="mb-8">
-        <SectionLabel>Daily</SectionLabel>
+      {/* ── Factors (Substance Zone) ── */}
+      <div className="mb-8 rounded-md bg-zone-substance-bg/60 px-4 py-3 -mx-1">
+        <ZoneLabel color="substance">Factors</ZoneLabel>
 
-        <div className="flex items-center justify-between py-4 border-b border-border/15">
-          <span className="text-base text-foreground">Drinks</span>
-          <div className="flex items-center gap-3">
-            <Button
-              size="icon"
-              variant="ghost"
+        <div className="flex items-center justify-between py-2">
+          <span className="text-sm text-foreground/70">Drinks</span>
+          <div className="flex items-center gap-2">
+            <button
               onClick={() => setDrinks(Math.max(0, drinks - 1))}
               disabled={drinks === 0}
+              className={cn(
+                "w-8 h-8 rounded-full flex items-center justify-center text-base font-light transition-colors",
+                drinks === 0 ? "text-muted-foreground/20" : "text-zone-substance active:bg-zone-substance/15"
+              )}
               data-testid="button-drinks-minus"
             >
-              <span className="text-xl font-light leading-none">−</span>
-            </Button>
+              −
+            </button>
             <span
-              className="text-2xl font-light tabular-nums w-8 text-center"
+              className="text-xl font-light tabular-nums w-5 text-center text-foreground"
               data-testid="text-drinks-count"
             >
               {drinks}
             </span>
-            <Button
-              size="icon"
-              variant="ghost"
+            <button
               onClick={() => setDrinks(Math.min(15, drinks + 1))}
+              className="w-8 h-8 rounded-full flex items-center justify-center text-base font-light text-zone-substance active:bg-zone-substance/15 transition-colors"
               data-testid="button-drinks-plus"
             >
-              <span className="text-xl font-light leading-none">+</span>
-            </Button>
+              +
+            </button>
           </div>
         </div>
 
-        <div className="flex items-center justify-between py-4 border-b border-border/15">
-          <span className="text-base text-foreground">Spliffs</span>
+        <div className="flex items-center justify-between py-2 border-t border-zone-substance/8">
+          <span className="text-sm text-foreground/70">Spliffs</span>
           <Switch
             checked={weed}
             onCheckedChange={setWeed}
@@ -472,54 +497,57 @@ export default function LogPage({ initialDate }: LogPageProps) {
           />
         </div>
 
-        <div className="flex items-center justify-between py-4 border-b border-border/15">
-          <span className="text-base text-foreground">Other</span>
+        <div className="flex items-center justify-between py-2 border-t border-zone-substance/8">
+          <span className="text-sm text-foreground/70">Other</span>
           <Switch
             checked={insights}
             onCheckedChange={setInsights}
             data-testid="switch-insights"
           />
         </div>
+      </div>
 
-        <div className="py-4">
-          <div className="text-base text-foreground mb-3">Next-day feeling</div>
-          <div className="flex gap-1 justify-center">
-            {[1, 2, 3, 4, 5].map((n) => (
-              <button
-                key={n}
-                onClick={() => setFeeling(n)}
-                className="p-2 transition-colors"
-                data-testid={`button-feeling-${n}`}
-              >
-                <Star
-                  className={cn(
-                    "w-8 h-8 transition-colors",
-                    n <= feeling
-                      ? "fill-primary text-primary"
-                      : "fill-none text-muted-foreground/30"
-                  )}
-                />
-              </button>
-            ))}
-          </div>
-          <div className="flex justify-between text-xs text-muted-foreground/50 mt-2 px-1">
-            <span>Terrible</span>
-            <span>Great</span>
-          </div>
+      {/* ── How I Feel (Reflection Zone) ── */}
+      <div className="mb-6">
+        <ZoneLabel color="reflection">How I feel</ZoneLabel>
+        <div className="flex gap-1 justify-center">
+          {[1, 2, 3, 4, 5].map((n) => (
+            <button
+              key={n}
+              onClick={() => setFeeling(n)}
+              className="p-2 transition-colors"
+              data-testid={`button-feeling-${n}`}
+            >
+              <Star
+                className={cn(
+                  "w-8 h-8 transition-colors",
+                  n <= feeling
+                    ? "fill-zone-reflection text-zone-reflection"
+                    : "fill-none text-zone-reflection-muted/30"
+                )}
+              />
+            </button>
+          ))}
         </div>
-
-        <div className="mt-4">
-          <div className="text-base text-foreground mb-2">Notes</div>
-          <Textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="Any observations..."
-            className="resize-none border-border/20 bg-transparent text-base min-h-[80px]"
-            data-testid="input-notes"
-          />
+        <div className="flex justify-between text-[10px] text-zone-reflection-muted/50 mt-2 px-2 uppercase tracking-wider">
+          <span>Terrible</span>
+          <span>Great</span>
         </div>
       </div>
 
+      {/* ── Notes (Reflection Zone) ── */}
+      <div className="mb-8">
+        <ZoneLabel color="reflection">Notes</ZoneLabel>
+        <Textarea
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          placeholder="Any observations..."
+          className="resize-none border-zone-reflection/10 bg-zone-reflection-bg/30 text-sm min-h-[72px] placeholder:text-zone-reflection-muted/30"
+          data-testid="input-notes"
+        />
+      </div>
+
+      {/* ── Save ── */}
       <div className="flex gap-3">
         {existingId && (
           <Button
@@ -532,27 +560,44 @@ export default function LogPage({ initialDate }: LogPageProps) {
         )}
         <Button
           onClick={handleSave}
-          className="flex-1 text-base"
+          className={cn(
+            "flex-1 text-base transition-all duration-300",
+            saved && "bg-emerald-600 hover:bg-emerald-600"
+          )}
           data-testid="button-save-entry"
         >
-          {existingId ? "Update" : "Save"}
+          {saved ? (
+            <Check className="w-5 h-5" />
+          ) : (
+            existingId ? "Update" : "Save"
+          )}
         </Button>
       </div>
     </div>
   );
 }
 
-function SectionLabel({
+function ZoneLabel({
   children,
+  color,
   className,
 }: {
   children: string;
+  color: "sleep" | "disruption" | "substance" | "reflection";
   className?: string;
 }) {
+  const colorMap = {
+    sleep: "text-zone-sleep-muted",
+    disruption: "text-zone-disruption-muted",
+    substance: "text-zone-substance-muted",
+    reflection: "text-zone-reflection-muted",
+  };
+
   return (
     <div
       className={cn(
-        "text-xs text-muted-foreground/60 uppercase tracking-[0.2em] font-medium mb-3",
+        "text-[10px] uppercase tracking-[0.2em] font-medium mb-3 pt-1",
+        colorMap[color],
         className
       )}
     >
@@ -567,16 +612,21 @@ function TimeRow({
   onChange,
   testId,
   noBorder,
+  zone,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   testId: string;
   noBorder?: boolean;
+  zone?: "sleep" | "disruption";
 }) {
   return (
-    <div className={cn("flex items-center justify-between py-4", !noBorder && "border-b border-border/15")}>
-      <label className="text-base text-muted-foreground">{label}</label>
+    <div className={cn(
+      "flex items-center justify-between py-3",
+      !noBorder && (zone === "sleep" ? "border-b border-zone-sleep/8" : "border-b border-border/10")
+    )}>
+      <label className="text-sm text-foreground/50">{label}</label>
       <input
         type="time"
         value={value}
@@ -584,33 +634,6 @@ function TimeRow({
         className="bg-transparent text-2xl font-light text-foreground tabular-nums text-right focus:outline-none [color-scheme:dark]"
         data-testid={testId}
       />
-    </div>
-  );
-}
-
-function MetricDisplay({
-  label,
-  value,
-  accent,
-}: {
-  label: string;
-  value: string;
-  accent?: boolean;
-}) {
-  return (
-    <div className="text-center">
-      <div
-        className={cn(
-          "text-3xl font-light tabular-nums",
-          accent ? "text-primary" : "text-foreground"
-        )}
-        data-testid={`metric-${label.toLowerCase().replace(/\s/g, "-")}`}
-      >
-        {value}
-      </div>
-      <div className="text-xs text-muted-foreground/50 mt-1 uppercase tracking-[0.15em]">
-        {label}
-      </div>
     </div>
   );
 }

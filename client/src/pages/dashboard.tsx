@@ -7,8 +7,9 @@ import {
   CartesianGrid,
   ResponsiveContainer,
   Tooltip,
+  ReferenceDot,
 } from "recharts";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { SleepEntry } from "@shared/schema";
@@ -28,10 +29,11 @@ import {
   type SleepQuality,
 } from "@/lib/sleepUtils";
 
-const AMBER = "hsl(28, 55%, 48%)";
-const SLATE = "hsl(200, 40%, 50%)";
-const GRID = "rgba(255, 255, 255, 0.04)";
-const AXIS = "rgba(255, 255, 255, 0.25)";
+const SLEEP_COLOR = "hsl(230, 58%, 68%)";
+const SUBSTANCE_COLOR = "hsl(35, 65%, 58%)";
+const REFLECTION_COLOR = "hsl(30, 15%, 65%)";
+const GRID = "rgba(255, 255, 255, 0.03)";
+const AXIS = "rgba(255, 255, 255, 0.2)";
 
 const QUALITY_COLORS: Record<SleepQuality, string> = {
   good: "bg-emerald-500",
@@ -69,6 +71,8 @@ export default function DashboardPage() {
           sleepHours: null,
           efficiency: null,
           feeling: null,
+          hasDrinks: false,
+          hasWeed: false,
         };
       const m = calculateMetrics(entry);
       return {
@@ -76,6 +80,8 @@ export default function DashboardPage() {
         sleepHours: Math.round((m.totalSleep / 60) * 10) / 10,
         efficiency: Math.round(m.sleepEfficiency),
         feeling: entry.feeling,
+        hasDrinks: entry.drinks > 0,
+        hasWeed: entry.weed,
       };
     });
   }, [filtered, range]);
@@ -93,6 +99,30 @@ export default function DashboardPage() {
       count: filtered.length,
     };
   }, [filtered]);
+
+  const prevPeriodAvg = useMemo(() => {
+    if (filtered.length === 0) return null;
+    const dayCount = period === "week" ? 7 : 30;
+    const prevStart = new Date(range.start);
+    prevStart.setDate(prevStart.getDate() - dayCount);
+    const prevStartStr = toDateString(prevStart);
+    const prevEnd = range.start;
+    const prevFiltered = entries.filter((e) => e.date >= prevStartStr && e.date < prevEnd);
+    if (prevFiltered.length === 0) return null;
+    const metrics = prevFiltered.map((e) => calculateMetrics(e));
+    return {
+      avgSleep: metrics.reduce((s, m) => s + m.totalSleep, 0) / metrics.length,
+      avgEff: metrics.reduce((s, m) => s + m.sleepEfficiency, 0) / metrics.length,
+    };
+  }, [entries, filtered, range, period]);
+
+  const sleepTrend = useMemo(() => {
+    if (!averages || !prevPeriodAvg) return "flat" as const;
+    const diff = averages.avgSleep - prevPeriodAvg.avgSleep;
+    if (diff > 15) return "up" as const;
+    if (diff < -15) return "down" as const;
+    return "flat" as const;
+  }, [averages, prevPeriodAvg]);
 
   const correlations = useMemo(() => {
     if (filtered.length < 2) return null;
@@ -133,6 +163,12 @@ export default function DashboardPage() {
     return map;
   }, [entries]);
 
+  const substanceDots = useMemo(() => {
+    return chartData
+      .map((d, i) => ({ ...d, index: i }))
+      .filter((d) => d.hasDrinks || d.hasWeed);
+  }, [chartData]);
+
   const calendarDays = getCalendarDays(calYear, calMonth);
   const dayHeaders = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
@@ -156,8 +192,9 @@ export default function DashboardPage() {
 
   return (
     <div className="px-5 pt-6 pb-24">
+      {/* ── Header ── */}
       <div className="flex items-center justify-between gap-4 mb-8 flex-wrap">
-        <h1 className="text-2xl font-medium">Stats</h1>
+        <h1 className="text-2xl font-medium tracking-tight">Stats</h1>
         <div className="flex gap-1">
           <Button
             variant={period === "week" ? "default" : "ghost"}
@@ -178,27 +215,52 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* ── Hero Stats ── */}
       {averages && (
-        <div className="grid grid-cols-3 gap-4 mb-10">
-          <Stat
-            label="Avg sleep"
-            value={formatDuration(averages.avgSleep)}
-            testId="text-avg-sleep"
-          />
-          <Stat
-            label="Avg efficiency"
-            value={formatEfficiency(averages.avgEff)}
-            accent
-            testId="text-avg-eff"
-          />
-          <Stat
-            label="Avg feeling"
-            value={averages.avgFeel.toFixed(1)}
-            testId="text-avg-feel"
-          />
+        <div className="mb-10">
+          <div className="flex items-baseline justify-center gap-2 mb-1">
+            <span
+              className="text-4xl font-light tabular-nums text-foreground tracking-tight"
+              data-testid="text-avg-sleep"
+            >
+              {formatDuration(averages.avgSleep)}
+            </span>
+            {sleepTrend === "up" && <TrendingUp className="w-4 h-4 text-emerald-500" />}
+            {sleepTrend === "down" && <TrendingDown className="w-4 h-4 text-red-400" />}
+            {sleepTrend === "flat" && <Minus className="w-3 h-3 text-muted-foreground/30" />}
+          </div>
+          <div className="text-[10px] text-muted-foreground/40 text-center uppercase tracking-[0.2em] mb-5">
+            Avg sleep · {averages.count} nights
+          </div>
+
+          <div className="flex items-baseline justify-center gap-8">
+            <div className="text-center">
+              <div
+                className="text-2xl font-light tabular-nums text-zone-sleep"
+                data-testid="text-avg-eff"
+              >
+                {formatEfficiency(averages.avgEff)}
+              </div>
+              <div className="text-[10px] text-muted-foreground/40 mt-0.5 uppercase tracking-[0.2em]">
+                Efficiency
+              </div>
+            </div>
+            <div className="text-center">
+              <div
+                className="text-2xl font-light tabular-nums text-zone-reflection"
+                data-testid="text-avg-feel"
+              >
+                {averages.avgFeel.toFixed(1)}
+              </div>
+              <div className="text-[10px] text-muted-foreground/40 mt-0.5 uppercase tracking-[0.2em]">
+                Feeling
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
+      {/* ── Quality Calendar ── */}
       <div className="mb-10" data-testid="calendar-quality">
         <div className="flex items-center justify-between mb-4">
           <Button size="icon" variant="ghost" onClick={prevMonth} data-testid="button-quality-cal-prev">
@@ -214,7 +276,7 @@ export default function DashboardPage() {
 
         <div className="grid grid-cols-7 gap-0">
           {dayHeaders.map((d) => (
-            <div key={d} className="text-center text-xs text-muted-foreground/40 pb-2 font-medium">
+            <div key={d} className="text-center text-[10px] text-muted-foreground/30 pb-2 font-medium uppercase">
               {d}
             </div>
           ))}
@@ -228,9 +290,9 @@ export default function DashboardPage() {
                 key={i}
                 className={cn(
                   "relative flex flex-col items-center justify-center py-2 text-sm",
-                  !isCurrentMonth && "opacity-25",
-                  isFutureDay && "opacity-15",
-                  isCurrentMonth && !isFutureDay && "text-foreground"
+                  !isCurrentMonth && "opacity-20",
+                  isFutureDay && "opacity-10",
+                  isCurrentMonth && !isFutureDay && "text-foreground/70"
                 )}
                 data-testid={`quality-day-${cd.date}`}
               >
@@ -246,38 +308,35 @@ export default function DashboardPage() {
         <div className="flex items-center justify-center gap-5 mt-4">
           <div className="flex items-center gap-1.5">
             <div className="w-2 h-2 rounded-full bg-emerald-500" />
-            <span className="text-xs text-muted-foreground/60">Good</span>
+            <span className="text-[10px] text-muted-foreground/40 uppercase tracking-wider">Good</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-2 h-2 rounded-full bg-amber-500" />
-            <span className="text-xs text-muted-foreground/60">OK</span>
+            <span className="text-[10px] text-muted-foreground/40 uppercase tracking-wider">OK</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-2 h-2 rounded-full bg-red-500" />
-            <span className="text-xs text-muted-foreground/60">Poor</span>
+            <span className="text-[10px] text-muted-foreground/40 uppercase tracking-wider">Poor</span>
           </div>
         </div>
       </div>
 
       {filtered.length === 0 && (
-        <div className="text-center text-muted-foreground/40 py-20">
-          <div className="text-base">No entries for this period</div>
+        <div className="text-center text-muted-foreground/30 py-20">
+          <div className="text-sm">No entries for this period</div>
         </div>
       )}
 
       {filtered.length > 0 && (
         <>
+          {/* ── Sleep Duration Chart ── */}
           <ChartSection title="Sleep duration" testId="chart-sleep">
             <ResponsiveContainer width="100%" height={180}>
               <LineChart
                 data={chartData}
                 margin={{ top: 5, right: 5, left: -20, bottom: 5 }}
               >
-                <CartesianGrid
-                  stroke={GRID}
-                  strokeDasharray="3 3"
-                  vertical={false}
-                />
+                <CartesianGrid stroke={GRID} strokeDasharray="3 3" vertical={false} />
                 <XAxis
                   dataKey="date"
                   tick={{ fill: AXIS, fontSize: 10 }}
@@ -294,39 +353,55 @@ export default function DashboardPage() {
                 />
                 <Tooltip
                   contentStyle={{
-                    background: "#1a1a1a",
-                    border: "1px solid rgba(255,255,255,0.08)",
+                    background: "hsl(215, 20%, 10%)",
+                    border: "1px solid rgba(255,255,255,0.06)",
                     borderRadius: "6px",
                     fontSize: "12px",
                   }}
-                  labelStyle={{ color: "rgba(255,255,255,0.4)" }}
+                  labelStyle={{ color: "rgba(255,255,255,0.3)" }}
                   itemStyle={{ color: "#fff" }}
                 />
                 <Line
                   type="monotone"
                   dataKey="sleepHours"
-                  stroke={AMBER}
+                  stroke={SLEEP_COLOR}
                   strokeWidth={1.5}
-                  dot={{ r: 2.5, fill: AMBER, strokeWidth: 0 }}
-                  activeDot={{ r: 4, fill: AMBER, strokeWidth: 0 }}
+                  dot={{ r: 2.5, fill: SLEEP_COLOR, strokeWidth: 0 }}
+                  activeDot={{ r: 4, fill: SLEEP_COLOR, strokeWidth: 0 }}
                   connectNulls
                   name="Hours"
                 />
+                {substanceDots
+                  .filter((d) => d.sleepHours !== null)
+                  .map((d) => (
+                    <ReferenceDot
+                      key={`sub-${d.date}`}
+                      x={d.date}
+                      y={d.sleepHours!}
+                      r={5}
+                      fill="transparent"
+                      stroke={SUBSTANCE_COLOR}
+                      strokeWidth={1.5}
+                    />
+                  ))}
               </LineChart>
             </ResponsiveContainer>
+            <div className="flex items-center justify-end gap-3 mt-1">
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 rounded-full border border-zone-substance" />
+                <span className="text-[10px] text-muted-foreground/30">Substance night</span>
+              </div>
+            </div>
           </ChartSection>
 
+          {/* ── Efficiency Chart ── */}
           <ChartSection title="Sleep efficiency" testId="chart-eff">
             <ResponsiveContainer width="100%" height={180}>
               <LineChart
                 data={chartData}
                 margin={{ top: 5, right: 5, left: -20, bottom: 5 }}
               >
-                <CartesianGrid
-                  stroke={GRID}
-                  strokeDasharray="3 3"
-                  vertical={false}
-                />
+                <CartesianGrid stroke={GRID} strokeDasharray="3 3" vertical={false} />
                 <XAxis
                   dataKey="date"
                   tick={{ fill: AXIS, fontSize: 10 }}
@@ -343,21 +418,21 @@ export default function DashboardPage() {
                 />
                 <Tooltip
                   contentStyle={{
-                    background: "#1a1a1a",
-                    border: "1px solid rgba(255,255,255,0.08)",
+                    background: "hsl(215, 20%, 10%)",
+                    border: "1px solid rgba(255,255,255,0.06)",
                     borderRadius: "6px",
                     fontSize: "12px",
                   }}
-                  labelStyle={{ color: "rgba(255,255,255,0.4)" }}
+                  labelStyle={{ color: "rgba(255,255,255,0.3)" }}
                   itemStyle={{ color: "#fff" }}
                 />
                 <Line
                   type="monotone"
                   dataKey="efficiency"
-                  stroke={SLATE}
+                  stroke={SLEEP_COLOR}
                   strokeWidth={1.5}
-                  dot={{ r: 2.5, fill: SLATE, strokeWidth: 0 }}
-                  activeDot={{ r: 4, fill: SLATE, strokeWidth: 0 }}
+                  dot={{ r: 2.5, fill: SLEEP_COLOR, strokeWidth: 0 }}
+                  activeDot={{ r: 4, fill: SLEEP_COLOR, strokeWidth: 0 }}
                   connectNulls
                   name="Efficiency"
                 />
@@ -365,17 +440,14 @@ export default function DashboardPage() {
             </ResponsiveContainer>
           </ChartSection>
 
+          {/* ── Feeling Chart ── */}
           <ChartSection title="Feeling" testId="chart-feel">
             <ResponsiveContainer width="100%" height={140}>
               <LineChart
                 data={chartData}
                 margin={{ top: 5, right: 5, left: -20, bottom: 5 }}
               >
-                <CartesianGrid
-                  stroke={GRID}
-                  strokeDasharray="3 3"
-                  vertical={false}
-                />
+                <CartesianGrid stroke={GRID} strokeDasharray="3 3" vertical={false} />
                 <XAxis
                   dataKey="date"
                   tick={{ fill: AXIS, fontSize: 10 }}
@@ -392,21 +464,21 @@ export default function DashboardPage() {
                 />
                 <Tooltip
                   contentStyle={{
-                    background: "#1a1a1a",
-                    border: "1px solid rgba(255,255,255,0.08)",
+                    background: "hsl(215, 20%, 10%)",
+                    border: "1px solid rgba(255,255,255,0.06)",
                     borderRadius: "6px",
                     fontSize: "12px",
                   }}
-                  labelStyle={{ color: "rgba(255,255,255,0.4)" }}
+                  labelStyle={{ color: "rgba(255,255,255,0.3)" }}
                   itemStyle={{ color: "#fff" }}
                 />
                 <Line
                   type="monotone"
                   dataKey="feeling"
-                  stroke="rgba(255,255,255,0.5)"
+                  stroke={REFLECTION_COLOR}
                   strokeWidth={1}
-                  dot={{ r: 2.5, fill: "rgba(255,255,255,0.5)", strokeWidth: 0 }}
-                  activeDot={{ r: 4, fill: "rgba(255,255,255,0.7)", strokeWidth: 0 }}
+                  dot={{ r: 2.5, fill: REFLECTION_COLOR, strokeWidth: 0 }}
+                  activeDot={{ r: 4, fill: REFLECTION_COLOR, strokeWidth: 0 }}
                   connectNulls
                   name="Feeling"
                 />
@@ -414,9 +486,10 @@ export default function DashboardPage() {
             </ResponsiveContainer>
           </ChartSection>
 
+          {/* ── Correlations ── */}
           {correlations && (correlations.drinks || correlations.weed) && (
             <div className="mt-2">
-              <div className="text-xs text-muted-foreground/50 uppercase tracking-[0.2em] font-medium mb-6">
+              <div className="text-[10px] text-zone-substance-muted uppercase tracking-[0.2em] font-medium mb-6">
                 Correlations
               </div>
 
@@ -447,32 +520,6 @@ export default function DashboardPage() {
   );
 }
 
-function Stat({
-  label,
-  value,
-  accent,
-  testId,
-}: {
-  label: string;
-  value: string;
-  accent?: boolean;
-  testId: string;
-}) {
-  return (
-    <div className="text-center">
-      <div
-        className={`text-3xl font-light tabular-nums ${accent ? "text-primary" : "text-foreground"}`}
-        data-testid={testId}
-      >
-        {value}
-      </div>
-      <div className="text-xs text-muted-foreground/50 mt-1 uppercase tracking-[0.15em]">
-        {label}
-      </div>
-    </div>
-  );
-}
-
 function ChartSection({
   title,
   testId,
@@ -484,7 +531,7 @@ function ChartSection({
 }) {
   return (
     <div className="mb-10" data-testid={testId}>
-      <div className="text-xs text-muted-foreground/50 uppercase tracking-[0.2em] font-medium mb-4">
+      <div className="text-[10px] text-muted-foreground/40 uppercase tracking-[0.2em] font-medium mb-4">
         {title}
       </div>
       {children}
@@ -507,7 +554,7 @@ function CorrelationBlock({
 }) {
   return (
     <div className="mb-8">
-      <div className="text-base text-foreground mb-3">{title}</div>
+      <div className="text-sm text-foreground/80 mb-3">{title}</div>
       <div className="grid grid-cols-2 gap-3">
         <CorrelationCard
           label={withLabel}
@@ -542,10 +589,10 @@ function CorrelationCard({
   count: number;
 }) {
   return (
-    <div className="p-3 rounded-md bg-card/40 border border-border/10">
-      <div className="text-sm text-muted-foreground mb-2.5">
+    <div className="p-3 rounded-md bg-zone-substance-bg/40 border border-zone-substance/8">
+      <div className="text-xs text-zone-substance-muted/70 mb-2.5">
         {label}{" "}
-        <span className="text-muted-foreground/30">({count}n)</span>
+        <span className="text-zone-substance-muted/30">({count}n)</span>
       </div>
       <div className="space-y-1.5">
         <CorrelationRow label="Sleep" value={formatDuration(sleep)} />
@@ -564,9 +611,9 @@ function CorrelationRow({
   value: string;
 }) {
   return (
-    <div className="flex justify-between text-sm">
-      <span className="text-muted-foreground/40">{label}</span>
-      <span className="tabular-nums text-foreground/80">{value}</span>
+    <div className="flex justify-between text-xs">
+      <span className="text-muted-foreground/30">{label}</span>
+      <span className="tabular-nums text-foreground/70">{value}</span>
     </div>
   );
 }

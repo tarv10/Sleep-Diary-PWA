@@ -53,7 +53,7 @@ function App() {
       </main>
 
       <nav
-        className="flex-shrink-0 border-t border-border/10 bg-background"
+        className="flex-shrink-0 border-t border-border/8 bg-background"
         style={{
           paddingBottom: "max(0.25rem, env(safe-area-inset-bottom))",
         }}
