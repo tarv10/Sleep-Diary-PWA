@@ -693,11 +693,14 @@ function NapSlider({ value, onChange }: { value: number; onChange: (v: number) =
     const raw = posToRaw(e.touches[0].clientX);
     setDragging(true);
     setRawValue(raw);
+    onChange(snapMinutes(raw));
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
     e.preventDefault();
-    setRawValue(posToRaw(e.touches[0].clientX));
+    const raw = posToRaw(e.touches[0].clientX);
+    setRawValue(raw);
+    onChange(snapMinutes(raw));
   };
 
   const handleTouchEnd = () => {
