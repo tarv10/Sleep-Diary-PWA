@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { ChevronLeft, ChevronRight, Plus, X, Trash2, Star, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -639,11 +639,29 @@ function napMinutesToSlider(min: number): number {
 }
 
 function NapSlider({ value, onChange }: { value: number; onChange: (v: number) => void }) {
-  const sliderPos = napMinutesToSlider(value);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const pct = napMinutesToSlider(value) * 100;
 
-  const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const pos = parseFloat(e.target.value);
-    onChange(napSliderToMinutes(pos));
+  const posToMinutes = (clientX: number) => {
+    const track = trackRef.current;
+    if (!track) return value;
+    const rect = track.getBoundingClientRect();
+    const pos = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    return napSliderToMinutes(pos);
+  };
+
+  const handleTouch = (e: React.TouchEvent) => {
+    e.preventDefault();
+    onChange(posToMinutes(e.touches[0].clientX));
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    e.preventDefault();
+    onChange(posToMinutes(e.touches[0].clientX));
+  };
+
+  const handleClick = (e: React.MouseEvent) => {
+    onChange(posToMinutes(e.clientX));
   };
 
   const ticks = [
@@ -656,51 +674,43 @@ function NapSlider({ value, onChange }: { value: number; onChange: (v: number) =
     { min: 180, label: "3h" },
   ];
 
-  const pct = sliderPos * 100;
-
   return (
-    <div className="pt-2 pb-2" data-testid="slider-nap">
-      <input
-        type="range"
-        min="0"
-        max="1"
-        step="0.005"
-        value={sliderPos}
-        onInput={handleInput}
-        onChange={handleInput}
-        className="nap-slider"
+    <div className="pt-2 pb-1" data-testid="slider-nap">
+      <div
+        ref={trackRef}
+        className="relative h-10 flex items-center cursor-pointer select-none touch-none"
+        onTouchStart={handleTouch}
+        onTouchMove={handleTouchMove}
+        onClick={handleClick}
         data-testid="input-nap-slider"
-        style={{
-          width: "100%",
-          height: "36px",
-          WebkitAppearance: "none",
-          appearance: "none" as const,
-          background: "transparent",
-          cursor: "pointer",
-          touchAction: "none",
-        }}
-      />
-      <style>{`
-        .nap-slider::-webkit-slider-runnable-track {
-          height: 6px;
-          border-radius: 3px;
-          background: linear-gradient(to right, var(--zone-disruption) ${pct}%, rgba(255,255,255,0.08) ${pct}%);
-        }
-        .nap-slider::-moz-range-track {
-          height: 6px;
-          border-radius: 3px;
-          background: linear-gradient(to right, var(--zone-disruption) ${pct}%, rgba(255,255,255,0.08) ${pct}%);
-        }
-      `}</style>
-      <div className="flex justify-between mt-0 px-0.5">
-        {ticks.map((t) => (
-          <span
-            key={t.min}
-            className="text-[9px] text-zone-disruption-muted/40 tabular-nums"
-          >
-            {t.label}
-          </span>
-        ))}
+      >
+        <div className="absolute left-0 right-0 h-1 rounded-full bg-white/[0.06]" />
+        <div
+          className="absolute left-0 h-1 rounded-full"
+          style={{ width: `${pct}%`, background: "var(--zone-disruption)" }}
+        />
+        <div
+          className="absolute w-5 h-5 rounded-full -translate-x-1/2"
+          style={{
+            left: `${pct}%`,
+            background: "var(--zone-disruption)",
+            boxShadow: "0 0 0 2px rgba(255,255,255,0.2)",
+          }}
+        />
+      </div>
+      <div className="relative h-4 mx-0">
+        {ticks.map((t) => {
+          const tickPct = napMinutesToSlider(t.min) * 100;
+          return (
+            <span
+              key={t.min}
+              className="absolute text-[9px] text-zone-disruption-muted/40 tabular-nums -translate-x-1/2"
+              style={{ left: `${tickPct}%` }}
+            >
+              {t.label}
+            </span>
+          );
+        })}
       </div>
     </div>
   );
