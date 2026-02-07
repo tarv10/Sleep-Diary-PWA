@@ -36,8 +36,7 @@ export default function LogPage({ initialDate }: LogPageProps) {
   const [wakeTime, setWakeTime] = useState("07:00");
   const [nightWakings, setNightWakings] = useState<NightWaking[]>([]);
   const [hasNap, setHasNap] = useState(false);
-  const [napStart, setNapStart] = useState("14:00");
-  const [napEnd, setNapEnd] = useState("14:30");
+  const [napMinutes, setNapMinutes] = useState(30);
   const [drinks, setDrinks] = useState(0);
   const [weed, setWeed] = useState(false);
   const [insights, setInsights] = useState(false);
@@ -71,8 +70,13 @@ export default function LogPage({ initialDate }: LogPageProps) {
       setWakeTime(entry.wakeTime);
       setNightWakings(entry.nightWakings);
       setHasNap(!!entry.napStart);
-      setNapStart(entry.napStart || "14:00");
-      setNapEnd(entry.napEnd || "14:30");
+      if (entry.napStart && entry.napEnd) {
+        const [sh, sm] = entry.napStart.split(":").map(Number);
+        const [eh, em] = entry.napEnd.split(":").map(Number);
+        setNapMinutes(Math.max(0, (eh * 60 + em) - (sh * 60 + sm)));
+      } else {
+        setNapMinutes(30);
+      }
       setDrinks(entry.drinks);
       setWeed(entry.weed);
       setInsights(entry.insights);
@@ -85,8 +89,7 @@ export default function LogPage({ initialDate }: LogPageProps) {
       setWakeTime("07:00");
       setNightWakings([]);
       setHasNap(false);
-      setNapStart("14:00");
-      setNapEnd("14:30");
+      setNapMinutes(30);
       setDrinks(0);
       setWeed(false);
       setInsights(false);
@@ -102,16 +105,23 @@ export default function LogPage({ initialDate }: LogPageProps) {
     setCalMonth(d.getMonth());
   }, [date]);
 
+  const napEndTime = useMemo(() => {
+    const totalMin = 14 * 60 + napMinutes;
+    const h = Math.floor(totalMin / 60);
+    const m = totalMin % 60;
+    return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`;
+  }, [napMinutes]);
+
   const metrics = useMemo(() => {
     return calculateMetrics({
       bedtime,
       sleepTime,
       wakeTime,
       nightWakings,
-      napStart: hasNap ? napStart : null,
-      napEnd: hasNap ? napEnd : null,
+      napStart: hasNap ? "14:00" : null,
+      napEnd: hasNap ? napEndTime : null,
     });
-  }, [bedtime, sleepTime, wakeTime, nightWakings, hasNap, napStart, napEnd]);
+  }, [bedtime, sleepTime, wakeTime, nightWakings, hasNap, napEndTime]);
 
   const handleSave = () => {
     const entry: SleepEntry = {
@@ -121,8 +131,8 @@ export default function LogPage({ initialDate }: LogPageProps) {
       sleepTime,
       wakeTime,
       nightWakings,
-      napStart: hasNap ? napStart : null,
-      napEnd: hasNap ? napEnd : null,
+      napStart: hasNap ? "14:00" : null,
+      napEnd: hasNap ? napEndTime : null,
       drinks,
       weed,
       insights,
@@ -384,31 +394,21 @@ export default function LogPage({ initialDate }: LogPageProps) {
         )}
 
         {hasNap && (
-          <div className="flex items-center gap-3 py-3 border-b border-zone-disruption/10">
-            <button
-              onClick={() => setActivePicker({ field: "napStart", value: napStart, label: "Nap start", onChange: setNapStart })}
-              className="bg-transparent text-lg font-light text-foreground/80 tabular-nums"
-              data-testid="input-nap-start"
-            >
-              {napStart}
-            </button>
-            <span className="text-zone-disruption-muted/40 text-sm">—</span>
-            <button
-              onClick={() => setActivePicker({ field: "napEnd", value: napEnd, label: "Nap end", onChange: setNapEnd })}
-              className="bg-transparent text-lg font-light text-foreground/80 tabular-nums"
-              data-testid="input-nap-end"
-            >
-              {napEnd}
-            </button>
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={() => setHasNap(false)}
-              className="ml-auto"
-              data-testid="button-remove-nap"
-            >
-              <X className="w-4 h-4" />
-            </Button>
+          <div className="py-3 border-b border-zone-disruption/10">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-2xl font-light text-foreground/80 tabular-nums" data-testid="text-nap-duration">
+                {formatDuration(napMinutes)}
+              </span>
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={() => setHasNap(false)}
+                data-testid="button-remove-nap"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+            <NapSlider value={napMinutes} onChange={setNapMinutes} />
           </div>
         )}
       </div>
@@ -621,6 +621,67 @@ function ZoneLabel({
       )}
     >
       {children}
+    </div>
+  );
+}
+
+const NAP_MAX = 180;
+const NAP_EXPONENT = Math.log(0.25) / Math.log(0.6);
+
+function napSliderToMinutes(pos: number): number {
+  if (pos <= 0) return 0;
+  const raw = NAP_MAX * Math.pow(pos, NAP_EXPONENT);
+  if (raw <= 45) return Math.round(raw / 5) * 5;
+  return Math.round(raw / 15) * 15;
+}
+
+function napMinutesToSlider(min: number): number {
+  if (min <= 0) return 0;
+  return Math.pow(min / NAP_MAX, 1 / NAP_EXPONENT);
+}
+
+function NapSlider({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  const sliderPos = napMinutesToSlider(value);
+
+  const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const pos = parseFloat(e.target.value);
+    onChange(napSliderToMinutes(pos));
+  };
+
+  const ticks = [
+    { min: 0, label: "0" },
+    { min: 15, label: "15m" },
+    { min: 30, label: "30m" },
+    { min: 45, label: "45m" },
+    { min: 90, label: "1.5h" },
+    { min: 180, label: "3h" },
+  ];
+
+  return (
+    <div className="pt-1 pb-2" data-testid="slider-nap">
+      <input
+        type="range"
+        min={0}
+        max={1}
+        step={0.005}
+        value={sliderPos}
+        onChange={handleInput}
+        className="w-full h-1.5 appearance-none rounded-full cursor-pointer nap-slider"
+        style={{
+          background: `linear-gradient(to right, var(--zone-disruption) ${sliderPos * 100}%, rgba(255,255,255,0.08) ${sliderPos * 100}%)`,
+        }}
+        data-testid="input-nap-slider"
+      />
+      <div className="flex justify-between mt-1.5 px-0.5">
+        {ticks.map((t) => (
+          <span
+            key={t.min}
+            className="text-[9px] text-zone-disruption-muted/40 tabular-nums"
+          >
+            {t.label}
+          </span>
+        ))}
+      </div>
     </div>
   );
 }
