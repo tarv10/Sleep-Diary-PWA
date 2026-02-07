@@ -368,7 +368,7 @@ function AmPmDrum({ totalMinutes }: { totalMinutes: number }) {
   const hour24 = Math.floor(norm / 60);
   const ampmIndex = hour24 < 12 ? 0 : 1;
   const minuteInHalf = norm % 720;
-  const fraction = minuteInHalf / MONTH_MINUTES;
+  const fraction = minuteInHalf / 720 * 0.15;
 
   const currentValue = ampmIndex + fraction;
   const intIndex = Math.floor(currentValue);
