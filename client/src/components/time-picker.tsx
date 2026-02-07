@@ -5,7 +5,7 @@ const ITEM_HEIGHT = 72;
 const VISIBLE_COUNT = 5;
 const DRUM_HEIGHT = VISIBLE_COUNT * ITEM_HEIGHT;
 const CENTER_OFFSET = Math.floor(VISIBLE_COUNT / 2) * ITEM_HEIGHT;
-const HOURS = Array.from({ length: 24 }, (_, i) => i);
+const HOURS_12 = Array.from({ length: 12 }, (_, i) => i === 0 ? 12 : i);
 const MINUTES = [0, 15, 30, 45];
 const DECELERATION = 0.94;
 const MIN_VELOCITY = 0.3;
@@ -27,6 +27,15 @@ function formatTime(totalMinutes: number): string {
   const finalM = snappedM === 60 ? 0 : snappedM;
   const finalH = snappedM === 60 ? (h + 1) % 24 : h;
   return `${finalH.toString().padStart(2, "0")}:${finalM.toString().padStart(2, "0")}`;
+}
+
+function to12Hour(hour24: number): number {
+  const h = hour24 % 12;
+  return h === 0 ? 12 : h;
+}
+
+function getAmPm(hour24: number): string {
+  return hour24 < 12 ? "am" : "pm";
 }
 
 interface TimePickerProps {
@@ -165,8 +174,12 @@ export default function TimePicker({ value, onChange, onClose, label }: TimePick
   };
 
   const norm = normalizeMinutes(totalMinutes);
-  const currentHour = norm / 60;
+  const hour24 = Math.floor(norm / 60);
+  const currentHour12 = to12Hour(hour24);
+  const hour12Index = HOURS_12.indexOf(currentHour12);
+  const currentHourFrac = hour12Index + (norm % 60) / 60;
   const currentMinuteQ = (norm % 60) / 15;
+  const ampm = getAmPm(hour24);
 
   return (
     <div
@@ -177,7 +190,7 @@ export default function TimePicker({ value, onChange, onClose, label }: TimePick
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
 
       <div
-        className="relative w-full max-w-sm bg-[#161b22] rounded-t-2xl border-t border-border/20 pb-safe animate-in slide-in-from-bottom duration-200"
+        className="relative w-full max-w-sm bg-[#161b22] rounded-t-2xl border-t border-border/20 pb-safe animate-in slide-in-from-bottom duration-200 select-none"
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
@@ -193,8 +206,8 @@ export default function TimePicker({ value, onChange, onClose, label }: TimePick
           <Drum
             type="hour"
             totalMinutes={totalMinutes}
-            currentValue={currentHour}
-            items={HOURS}
+            currentValue={currentHourFrac}
+            items={HOURS_12}
             onTouchStart={handleTouchStart("hour")}
             onWheel={handleWheel("hour")}
           />
@@ -208,20 +221,30 @@ export default function TimePicker({ value, onChange, onClose, label }: TimePick
             </div>
           </div>
 
-          <Drum
-            type="minute"
-            totalMinutes={totalMinutes}
-            currentValue={currentMinuteQ}
-            items={MINUTES}
-            onTouchStart={handleTouchStart("minute")}
-            onWheel={handleWheel("minute")}
-          />
+          <div className="relative" style={{ height: DRUM_HEIGHT }}>
+            <Drum
+              type="minute"
+              totalMinutes={totalMinutes}
+              currentValue={currentMinuteQ}
+              items={MINUTES}
+              onTouchStart={handleTouchStart("minute")}
+              onWheel={handleWheel("minute")}
+            />
+            <div
+              className="absolute right-0 flex items-center pointer-events-none z-30"
+              style={{ top: CENTER_OFFSET, height: ITEM_HEIGHT }}
+            >
+              <span className="text-xs font-medium text-foreground/40 ml-1 -mr-6">
+                {ampm}
+              </span>
+            </div>
+          </div>
         </div>
 
         <div className="px-6 pb-6 pt-2">
           <button
             onClick={handleConfirm}
-            className="w-full py-3 rounded-md bg-zone-sleep/20 text-zone-sleep text-sm font-medium tracking-wide uppercase transition-colors active:bg-zone-sleep/30"
+            className="w-full py-3 rounded-md bg-zone-sleep/20 text-zone-sleep text-sm font-medium tracking-wide uppercase transition-colors active:bg-zone-sleep/30 select-none"
             data-testid="button-time-confirm"
           >
             Done
@@ -250,7 +273,8 @@ function Drum({ type, totalMinutes, currentValue, items, onTouchStart, onWheel }
   const halfRender = Math.floor(renderCount / 2);
 
   const norm = normalizeMinutes(totalMinutes);
-  const ownerHour = Math.floor(norm / 60);
+  const ownerHour24 = Math.floor(norm / 60);
+  const ownerHour12 = to12Hour(ownerHour24);
   const minuteInHour = norm % 60;
   const minuteProgress = minuteInHour / 60;
 
@@ -293,16 +317,20 @@ function Drum({ type, totalMinutes, currentValue, items, onTouchStart, onWheel }
 
         if (isHour) {
           const hourVal = items[itemIndex];
-          if (hourVal === ownerHour) {
+          if (hourVal === ownerHour12) {
             opacity = 1;
-          } else if (hourVal === (ownerHour + 1) % 24) {
-            const fade = minuteProgress > 0.75 ? (minuteProgress - 0.75) * 4 : 0;
-            opacity = 0.12 + fade * 0.5;
-          } else if (hourVal === (ownerHour - 1 + 24) % 24) {
-            const fade = minuteProgress < 0.25 ? (0.25 - minuteProgress) * 4 : 0;
-            opacity = 0.12 + fade * 0.5;
           } else {
-            opacity = 0.08;
+            const nextHour12 = to12Hour((ownerHour24 + 1) % 24);
+            const prevHour12 = to12Hour((ownerHour24 - 1 + 24) % 24);
+            if (hourVal === nextHour12) {
+              const fade = minuteProgress > 0.75 ? (minuteProgress - 0.75) * 4 : 0;
+              opacity = 0.12 + fade * 0.5;
+            } else if (hourVal === prevHour12) {
+              const fade = minuteProgress < 0.25 ? (0.25 - minuteProgress) * 4 : 0;
+              opacity = 0.12 + fade * 0.5;
+            } else {
+              opacity = 0.08;
+            }
           }
         } else {
           opacity = Math.max(0.08, 1 - distFromCenter * 0.4);
@@ -323,7 +351,10 @@ function Drum({ type, totalMinutes, currentValue, items, onTouchStart, onWheel }
               "tabular-nums text-foreground",
               isHour ? "text-6xl font-semibold" : "text-4xl font-light"
             )}>
-              {items[itemIndex].toString().padStart(2, "0")}
+              {isHour
+                ? items[itemIndex].toString()
+                : items[itemIndex].toString().padStart(2, "0")
+              }
             </span>
           </div>
         );
