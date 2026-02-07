@@ -1,0 +1,74 @@
+## Sleep Diary App — Interface Design Brief
+
+### Context
+This is a personal sleep diary used daily on iPhone. The primary interaction happens first thing in the morning when the user is barely awake — logging last night's sleep. The secondary interaction is reviewing patterns over time from the dashboard. Every design decision should serve one of these two moments.
+
+### Design Philosophy
+This is not a wellness app. It's a personal instrument — closer to a pilot's logbook or a well-designed cycling computer than anything in the health app store. It should feel confident, opinionated, and slightly beautiful. Form serves function, but form still matters.
+
+### Visual Language
+
+**Color System — Functional, Not Decorative**
+Color defines zones, not moods. Each section of the entry form occupies a distinct color territory so the user can navigate by feel:
+
+- **Sleep zone** (bedtime, sleep time, wake time): Deep indigo/navy. This is the core of the app and should feel like night.
+- **Disruption zone** (night wakings): A cooler, lighter shift — slate or muted blue-grey. Visually "lighter sleep."
+- **Substance zone** (drinks, weed): Warm amber/ochre. Distinct from the sleep palette. Signals a different category of input.
+- **Reflection zone** (feeling score, notes, insights): Soft warm neutral — off-white or warm grey. This is the morning, waking up.
+- **Calculated metrics** (total sleep, efficiency): These float above the form in a persistent or summary strip. High contrast. The sleep total is the hero number on the page — largest type, most prominent position.
+
+Background should be dark but not pure black — something like #0D1117 (a very dark blue-black) that has warmth and depth.
+
+**Typography**
+One typeface family only. A humanist or geometric sans-serif with excellent numerals — numbers are the primary content of this app and should look beautiful at large sizes. Use weight and size aggressively for hierarchy:
+- Hero metrics: extra-large, medium weight
+- Input labels: small, uppercase, tracked out, low opacity
+- Values: large, full opacity
+- Notes/secondary: standard body size
+
+**Layout Principles**
+
+*Entry Screen:*
+Structured as a vertical narrative — a story of the night told top to bottom:
+1. **Date** (prominent, defaults to yesterday, tappable to change)
+2. **The Night** — bedtime, sleep time, wake time in a tight cluster. These three are always visible.
+3. **Disruptions** — night wakings, collapsed by default, expand with a "+" tap. Each waking is a start/end pair.
+4. **Nap** — optional, collapsed by default.
+5. **Metrics strip** — calculated totals appear here, updating live as times are entered. Total sleep is the hero. Efficiency percentage beside it.
+6. **Factors** — drinks stepper, weed toggle, insights toggle. Horizontal row, compact.
+7. **How I feel** — 1-5 scale. Large tappable targets. Could be numbered blocks or a segmented bar.
+8. **Notes** — free text, expandable. Starts as a single line.
+9. **Save** — single prominent button, bottom of scroll.
+
+Group related inputs tightly — they should feel like instrument clusters, not a form. Generous spacing *between* groups, tight spacing *within* groups.
+
+*Dashboard:*
+This is the reward screen. It should feel like opening a beautifully designed report.
+- Default to weekly view, toggle to monthly
+- Hero stat up top: average sleep this period, with trend arrow
+- Average efficiency, average feeling score alongside
+- Chart: sleep duration over time as a clean bar or area chart. Thin, elegant, not chunky.
+- Correlation overlays: ability to see drinks/weed nights marked on the sleep chart so patterns are visible at a glance
+- Use the same color zones from the entry form so there's visual continuity — amber dots for drinking nights, etc.
+
+### Interaction Qualities
+- **Time pickers**: Native iOS inputs. No custom JavaScript wheels.
+- **Toggles**: Generous hit targets. Subtle color shift on state change. Should be satisfying to tap.
+- **Stepper** (drinks): Tap +/- with the number large and central. Maybe allow tap-and-hold for fast increment.
+- **Transitions**: Smooth, quick, no bounce or overshoot. Expanding sections should ease in, not snap.
+- **Save feedback**: Brief, confident — a checkmark or subtle flash, not a modal or celebration.
+
+### What This Should NOT Look Like
+- No rounded pastel cards floating on grey backgrounds
+- No emoji or illustrations anywhere
+- No gratuitous animations or confetti
+- No "streaks" or gamification language
+- No onboarding carousel
+- No gradient buttons
+- Nothing that looks like it was made from a Tailwind UI template without modification
+
+### Reference Touchpoints
+- The data density of a Garmin cycling computer
+- The typography confidence of the Nomos Glashütte website
+- The color-as-information approach of a Bloomberg terminal (but beautiful)
+- The restraint of Teenage Engineering product design
