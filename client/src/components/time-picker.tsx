@@ -631,7 +631,16 @@ export function InlineTimePicker({ value, onChange, fadeBg = "#0D1117", testId }
         fadeBottom={fadeBottom}
       />
 
-      <div className="relative overflow-hidden touch-none select-none ml-0.5" style={{ height: INLINE_DRUM_HEIGHT, width: 24 }}>
+      <div
+        className="relative overflow-hidden touch-none select-none ml-0.5 cursor-pointer"
+        style={{ height: INLINE_DRUM_HEIGHT, width: 24 }}
+        onClick={() => {
+          cancelAnimationFrame(animFrame.current);
+          const target = totalMinutesRef.current + (ampm === "am" ? 720 : -720);
+          animateToTarget(totalMinutesRef.current, target);
+        }}
+        data-testid="inline-drum-ampm"
+      >
         <div className="absolute inset-x-0 top-0 pointer-events-none z-20" style={{ height: INLINE_CENTER, background: fadeTop }} />
         <div className="absolute inset-x-0 bottom-0 pointer-events-none z-20" style={{ height: INLINE_CENTER, background: fadeBottom }} />
         {["am", "pm"].map((label) => {
@@ -653,7 +662,7 @@ export function InlineTimePicker({ value, onChange, fadeBg = "#0D1117", testId }
           return (
             <div
               key={label}
-              className="absolute inset-x-0 flex items-center justify-center"
+              className="absolute inset-x-0 flex items-center justify-center pointer-events-none"
               style={{
                 height: INLINE_ITEM_HEIGHT,
                 transform: `translateY(${y}px) scale(${scale})`,
