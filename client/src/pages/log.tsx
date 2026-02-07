@@ -627,11 +627,17 @@ function ZoneLabel({
 
 function napSliderToMinutes(pos: number): number {
   if (pos <= 0) return 0;
+  let raw: number;
   if (pos <= 0.5) {
-    return Math.round(45 * Math.pow(pos / 0.5, 1.5));
+    raw = 45 * Math.pow(pos / 0.5, 1.5);
+  } else {
+    const t = (pos - 0.5) / 0.5;
+    raw = 45 + 135 * Math.pow(t, 1.8);
   }
-  const t = (pos - 0.5) / 0.5;
-  return Math.round(45 + 135 * Math.pow(t, 1.8));
+  if (raw <= 60) {
+    return Math.round(raw / 5) * 5;
+  }
+  return Math.round(raw / 15) * 15;
 }
 
 function napMinutesToSlider(min: number): number {
