@@ -705,7 +705,6 @@ function NapSlider({ value, onChange }: { value: number; onChange: (v: number) =
 
   const handleTouchEnd = () => {
     setDragging(false);
-    onChange(snapMinutes(rawValue));
   };
 
   const handleClick = (e: React.MouseEvent) => {
