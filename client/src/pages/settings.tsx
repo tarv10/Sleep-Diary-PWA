@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Download, Trash2, Lock, Unlock } from "lucide-react";
+import { Download, Trash2, Lock, Unlock, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
@@ -13,6 +13,8 @@ import {
   setUnlocked,
 } from "@/lib/storage";
 import { toDateString, addDays } from "@/lib/sleepUtils";
+import { InlineTimePicker } from "@/components/time-picker";
+import { cn } from "@/lib/utils";
 import type { AppSettings } from "@shared/schema";
 
 export default function SettingsPage() {
@@ -220,6 +222,42 @@ export default function SettingsPage() {
         )}
       </Section>
 
+      <Section label="Defaults">
+        <div className="py-3 space-y-0">
+          <SettingsTimeRow
+            label="Bedtime"
+            value={settings.defaultBedtime}
+            onChange={(v) => {
+              const updated = { ...settings, defaultBedtime: v };
+              saveSettings(updated);
+              setSettingsState(updated);
+            }}
+            testId="input-default-bedtime"
+          />
+          <SettingsTimeRow
+            label="Fell asleep"
+            value={settings.defaultSleepTime}
+            onChange={(v) => {
+              const updated = { ...settings, defaultSleepTime: v };
+              saveSettings(updated);
+              setSettingsState(updated);
+            }}
+            testId="input-default-sleep-time"
+          />
+          <SettingsTimeRow
+            label="Woke up"
+            value={settings.defaultWakeTime}
+            onChange={(v) => {
+              const updated = { ...settings, defaultWakeTime: v };
+              saveSettings(updated);
+              setSettingsState(updated);
+            }}
+            testId="input-default-wake-time"
+            noBorder
+          />
+        </div>
+      </Section>
+
       <Section label="Export">
         <div className="space-y-4 py-4">
           <div className="flex items-center gap-3">
@@ -324,6 +362,33 @@ function Section({
         {label}
       </div>
       <div className="border-b border-border/8">{children}</div>
+    </div>
+  );
+}
+
+function SettingsTimeRow({
+  label,
+  value,
+  onChange,
+  testId,
+  noBorder,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  testId: string;
+  noBorder?: boolean;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex items-center justify-between",
+        !noBorder && "border-b border-border/8"
+      )}
+      data-testid={testId}
+    >
+      <span className="text-sm text-foreground/50">{label}</span>
+      <InlineTimePicker value={value} onChange={onChange} fadeBg="#0D1117" testId={`${testId}-picker`} />
     </div>
   );
 }

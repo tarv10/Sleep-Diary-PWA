@@ -12,6 +12,7 @@ import {
   deleteEntry,
   generateId,
   getAllEntries,
+  getSettings,
 } from "@/lib/storage";
 import {
   calculateMetrics,
@@ -29,11 +30,12 @@ interface LogPageProps {
 }
 
 export default function LogPage({ initialDate }: LogPageProps) {
+  const defaults = getSettings();
   const [date, setDate] = useState(initialDate || getYesterday());
   const [calendarOpen, setCalendarOpen] = useState(false);
-  const [bedtime, setBedtime] = useState("22:30");
-  const [sleepTime, setSleepTime] = useState("23:00");
-  const [wakeTime, setWakeTime] = useState("07:00");
+  const [bedtime, setBedtime] = useState(defaults.defaultBedtime);
+  const [sleepTime, setSleepTime] = useState(defaults.defaultSleepTime);
+  const [wakeTime, setWakeTime] = useState(defaults.defaultWakeTime);
   const [nightWakings, setNightWakings] = useState<NightWaking[]>([]);
   const [hasNap, setHasNap] = useState(false);
   const [napMinutes, setNapMinutes] = useState(30);
@@ -44,6 +46,7 @@ export default function LogPage({ initialDate }: LogPageProps) {
   const [notes, setNotes] = useState("");
   const [existingId, setExistingId] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const manualEndIds = useRef<Set<string>>(new Set());
   const [activePicker, setActivePicker] = useState<{
     field: string;
     value: string;
@@ -69,6 +72,7 @@ export default function LogPage({ initialDate }: LogPageProps) {
       setSleepTime(entry.sleepTime);
       setWakeTime(entry.wakeTime);
       setNightWakings(entry.nightWakings);
+      manualEndIds.current = new Set(entry.nightWakings.map((w) => w.id));
       setHasNap(!!entry.napStart);
       if (entry.napStart && entry.napEnd) {
         const [sh, sm] = entry.napStart.split(":").map(Number);
@@ -84,9 +88,11 @@ export default function LogPage({ initialDate }: LogPageProps) {
       setNotes(entry.notes);
       setExistingId(entry.id);
     } else {
-      setBedtime("22:30");
-      setSleepTime("23:00");
-      setWakeTime("07:00");
+      const s = getSettings();
+      setBedtime(s.defaultBedtime);
+      setSleepTime(s.defaultSleepTime);
+      setWakeTime(s.defaultWakeTime);
+      manualEndIds.current.clear();
       setNightWakings([]);
       setHasNap(false);
       setNapMinutes(30);
@@ -153,10 +159,11 @@ export default function LogPage({ initialDate }: LogPageProps) {
   const handleDelete = () => {
     if (existingId) {
       deleteEntry(existingId);
+      const s = getSettings();
       setExistingId(null);
-      setBedtime("22:30");
-      setSleepTime("23:00");
-      setWakeTime("07:00");
+      setBedtime(s.defaultBedtime);
+      setSleepTime(s.defaultSleepTime);
+      setWakeTime(s.defaultWakeTime);
       setNightWakings([]);
       setHasNap(false);
       setDrinks(0);
@@ -168,14 +175,22 @@ export default function LogPage({ initialDate }: LogPageProps) {
   };
 
   const addNightWaking = () => {
+    const newId = generateId();
     setNightWakings([
       ...nightWakings,
-      { id: generateId(), start: "03:00", end: "03:30" },
+      { id: newId, start: "03:00", end: "03:15" },
     ]);
   };
 
   const removeNightWaking = (id: string) => {
+    manualEndIds.current.delete(id);
     setNightWakings(nightWakings.filter((w) => w.id !== id));
+  };
+
+  const addMinutesToTime = (time: string, minutes: number): string => {
+    const [h, m] = time.split(":").map(Number);
+    const total = (h * 60 + m + minutes) % 1440;
+    return `${Math.floor(total / 60).toString().padStart(2, "0")}:${(total % 60).toString().padStart(2, "0")}`;
   };
 
   const updateWaking = (
@@ -183,8 +198,17 @@ export default function LogPage({ initialDate }: LogPageProps) {
     field: "start" | "end",
     value: string
   ) => {
-    setNightWakings(
-      nightWakings.map((w) => (w.id === id ? { ...w, [field]: value } : w))
+    if (field === "end") {
+      manualEndIds.current.add(id);
+    }
+    setNightWakings((prev) =>
+      prev.map((w) => {
+        if (w.id !== id) return w;
+        if (field === "start" && !manualEndIds.current.has(id)) {
+          return { ...w, start: value, end: addMinutesToTime(value, 15) };
+        }
+        return { ...w, [field]: value };
+      })
     );
   };
 
