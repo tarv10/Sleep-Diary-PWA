@@ -626,7 +626,7 @@ function ZoneLabel({
 }
 
 const NAP_MAX = 180;
-const NAP_EXPONENT = Math.log(0.25) / Math.log(0.6);
+const NAP_EXPONENT = Math.log(0.25) / Math.log(0.5);
 
 function napSliderToMinutes(pos: number): number {
   if (pos <= 0) return 0;
