@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import TimePicker from "@/components/time-picker";
+import TimePicker, { InlineTimePicker } from "@/components/time-picker";
 import type { SleepEntry, NightWaking } from "@shared/schema";
 import {
   getEntryByDate,
@@ -298,28 +298,9 @@ export default function LogPage({ initialDate }: LogPageProps) {
       {/* ── The Night (Sleep Zone) ── */}
       <div className="mb-2 rounded-md bg-zone-sleep-bg/60 px-4 -mx-1">
         <ZoneLabel color="sleep">The Night</ZoneLabel>
-        <TimeRow
-          label="Bedtime"
-          value={bedtime}
-          onTap={() => setActivePicker({ field: "bedtime", value: bedtime, label: "Bedtime", onChange: setBedtime })}
-          testId="input-bedtime"
-          zone="sleep"
-        />
-        <TimeRow
-          label="Fell asleep"
-          value={sleepTime}
-          onTap={() => setActivePicker({ field: "sleepTime", value: sleepTime, label: "Fell asleep", onChange: setSleepTime })}
-          testId="input-sleep-time"
-          zone="sleep"
-        />
-        <TimeRow
-          label="Woke up"
-          value={wakeTime}
-          onTap={() => setActivePicker({ field: "wakeTime", value: wakeTime, label: "Woke up", onChange: setWakeTime })}
-          testId="input-wake-time"
-          zone="sleep"
-          noBorder
-        />
+        <InlineTimeRow label="Bedtime" value={bedtime} onChange={setBedtime} testId="input-bedtime" />
+        <InlineTimeRow label="Fell asleep" value={sleepTime} onChange={setSleepTime} testId="input-sleep-time" />
+        <InlineTimeRow label="Woke up" value={wakeTime} onChange={setWakeTime} testId="input-wake-time" noBorder />
       </div>
 
       {/* ── Disruptions (Disruption Zone) ── */}
@@ -765,6 +746,33 @@ function NapSlider({ value, onChange }: { value: number; onChange: (v: number) =
           );
         })}
       </div>
+    </div>
+  );
+}
+
+function InlineTimeRow({
+  label,
+  value,
+  onChange,
+  testId,
+  noBorder,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  testId: string;
+  noBorder?: boolean;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex items-center justify-between",
+        !noBorder && "border-b border-zone-sleep/8"
+      )}
+      data-testid={testId}
+    >
+      <span className="text-sm text-foreground/50">{label}</span>
+      <InlineTimePicker value={value} onChange={onChange} fadeBg="#0f1219" testId={`${testId}-picker`} />
     </div>
   );
 }

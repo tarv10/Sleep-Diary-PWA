@@ -429,3 +429,342 @@ function AmPmDrum({ totalMinutes }: { totalMinutes: number }) {
     </div>
   );
 }
+
+const INLINE_ITEM_HEIGHT = 36;
+const INLINE_VISIBLE = 3;
+const INLINE_DRUM_HEIGHT = INLINE_VISIBLE * INLINE_ITEM_HEIGHT;
+const INLINE_CENTER = Math.floor(INLINE_VISIBLE / 2) * INLINE_ITEM_HEIGHT;
+
+interface InlineTimePickerProps {
+  value: string;
+  onChange: (value: string) => void;
+  fadeBg?: string;
+  testId?: string;
+}
+
+export function InlineTimePicker({ value, onChange, fadeBg = "#0D1117", testId }: InlineTimePickerProps) {
+  const [totalMinutes, setTotalMinutes] = useState(() => parseTime(value));
+  const totalMinutesRef = useRef(totalMinutes);
+  const isDragging = useRef<"hour" | "minute" | null>(null);
+  const dragStartY = useRef(0);
+  const dragStartMinutes = useRef(0);
+  const lastY = useRef(0);
+  const lastTime = useRef(0);
+  const velocity = useRef(0);
+  const animFrame = useRef<number>(0);
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+
+  useEffect(() => {
+    totalMinutesRef.current = totalMinutes;
+  }, [totalMinutes]);
+
+  useEffect(() => {
+    const incoming = parseTime(value);
+    if (Math.abs(normalizeMinutes(totalMinutesRef.current) - normalizeMinutes(incoming)) > 1) {
+      setTotalMinutes(incoming);
+      totalMinutesRef.current = incoming;
+    }
+  }, [value]);
+
+  useEffect(() => {
+    return () => { cancelAnimationFrame(animFrame.current); };
+  }, []);
+
+  const emitChange = useCallback((minutes: number) => {
+    onChangeRef.current(formatTime(minutes));
+  }, []);
+
+  const snapAndAnimate = useCallback((fromMinutes: number, vel: number, drum: "hour" | "minute") => {
+    const scale = drum === "hour" ? 30 : 7.5;
+    let currentMinutes = fromMinutes;
+    let currentVelocity = vel * scale / INLINE_ITEM_HEIGHT;
+
+    const animate = () => {
+      currentVelocity *= DECELERATION;
+      currentMinutes += currentVelocity;
+
+      if (Math.abs(currentVelocity) < MIN_VELOCITY) {
+        const snapped = Math.round(currentMinutes / 15) * 15;
+        animateToTarget(currentMinutes, snapped);
+        return;
+      }
+
+      totalMinutesRef.current = currentMinutes;
+      setTotalMinutes(currentMinutes);
+      animFrame.current = requestAnimationFrame(animate);
+    };
+
+    animate();
+  }, []);
+
+  const animateToTarget = useCallback((from: number, target: number) => {
+    let current = from;
+    const animate = () => {
+      current += (target - current) * 0.25;
+      if (Math.abs(target - current) < 0.5) {
+        totalMinutesRef.current = target;
+        setTotalMinutes(target);
+        emitChange(target);
+        return;
+      }
+      totalMinutesRef.current = current;
+      setTotalMinutes(current);
+      animFrame.current = requestAnimationFrame(animate);
+    };
+    animate();
+  }, [emitChange]);
+
+  const handleTouchStart = useCallback((drum: "hour" | "minute") => (e: React.TouchEvent) => {
+    cancelAnimationFrame(animFrame.current);
+    isDragging.current = drum;
+    dragStartY.current = e.touches[0].clientY;
+    dragStartMinutes.current = totalMinutesRef.current;
+    lastY.current = e.touches[0].clientY;
+    lastTime.current = Date.now();
+    velocity.current = 0;
+  }, []);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const onMove = (e: TouchEvent) => {
+      if (!isDragging.current) return;
+      e.preventDefault();
+
+      const y = e.touches[0].clientY;
+      const dy = y - dragStartY.current;
+      const scale = isDragging.current === "hour" ? 30 / INLINE_ITEM_HEIGHT : 7.5 / INLINE_ITEM_HEIGHT;
+      const newTotal = dragStartMinutes.current - dy * scale;
+
+      const now = Date.now();
+      const dt = now - lastTime.current;
+      if (dt > 0 && dt < 100) {
+        velocity.current = (lastY.current - y) / dt;
+      }
+      lastY.current = y;
+      lastTime.current = now;
+
+      totalMinutesRef.current = newTotal;
+      setTotalMinutes(newTotal);
+    };
+
+    const onEnd = () => {
+      if (!isDragging.current) return;
+      const drum = isDragging.current;
+      isDragging.current = null;
+
+      const vel = velocity.current;
+      if (Math.abs(vel) > 0.1) {
+        snapAndAnimate(totalMinutesRef.current, vel, drum);
+      } else {
+        const snapped = Math.round(totalMinutesRef.current / 15) * 15;
+        animateToTarget(totalMinutesRef.current, snapped);
+      }
+    };
+
+    el.addEventListener("touchmove", onMove, { passive: false });
+    el.addEventListener("touchend", onEnd);
+    return () => {
+      el.removeEventListener("touchmove", onMove);
+      el.removeEventListener("touchend", onEnd);
+    };
+  }, [snapAndAnimate, animateToTarget]);
+
+  const handleWheel = useCallback((drum: "hour" | "minute") => (e: React.WheelEvent) => {
+    cancelAnimationFrame(animFrame.current);
+    const scale = drum === "hour" ? 30 / INLINE_ITEM_HEIGHT : 7.5 / INLINE_ITEM_HEIGHT;
+    const delta = e.deltaY * scale;
+    const newTotal = totalMinutesRef.current + delta;
+    const snapped = Math.round(newTotal / 15) * 15;
+    animateToTarget(totalMinutesRef.current, snapped);
+  }, [animateToTarget]);
+
+  const norm = normalizeMinutes(totalMinutes);
+  const hour24 = Math.floor(norm / 60);
+  const currentHour12 = to12Hour(hour24);
+  const hour12Index = HOURS_12.indexOf(currentHour12);
+  const currentHourFrac = hour12Index + (norm % 60) / 60;
+  const currentMinuteQ = (norm % 60) / 15;
+  const ampm = getAmPm(hour24);
+
+  const fadeTop = `linear-gradient(to bottom, ${fadeBg} 0%, ${fadeBg}cc 30%, transparent 100%)`;
+  const fadeBottom = `linear-gradient(to top, ${fadeBg} 0%, ${fadeBg}cc 30%, transparent 100%)`;
+
+  return (
+    <div
+      ref={containerRef}
+      className="flex items-center justify-end gap-0 select-none touch-none"
+      data-testid={testId}
+    >
+      <InlineDrum
+        type="hour"
+        totalMinutes={totalMinutes}
+        currentValue={currentHourFrac}
+        items={HOURS_12}
+        onTouchStart={handleTouchStart("hour")}
+        onWheel={handleWheel("hour")}
+        fadeTop={fadeTop}
+        fadeBottom={fadeBottom}
+      />
+
+      <div className="relative select-none" style={{ height: INLINE_DRUM_HEIGHT, width: 8 }}>
+        <div
+          className="absolute inset-x-0 flex items-center justify-center text-xl font-light text-foreground/25"
+          style={{ top: INLINE_CENTER, height: INLINE_ITEM_HEIGHT }}
+        >
+          :
+        </div>
+      </div>
+
+      <InlineDrum
+        type="minute"
+        totalMinutes={totalMinutes}
+        currentValue={currentMinuteQ}
+        items={MINUTES}
+        onTouchStart={handleTouchStart("minute")}
+        onWheel={handleWheel("minute")}
+        fadeTop={fadeTop}
+        fadeBottom={fadeBottom}
+      />
+
+      <div className="relative overflow-hidden touch-none select-none ml-0.5" style={{ height: INLINE_DRUM_HEIGHT, width: 24 }}>
+        <div className="absolute inset-x-0 top-0 pointer-events-none z-20" style={{ height: INLINE_CENTER, background: fadeTop }} />
+        <div className="absolute inset-x-0 bottom-0 pointer-events-none z-20" style={{ height: INLINE_CENTER, background: fadeBottom }} />
+        {["am", "pm"].map((label) => {
+          const isActive = label === ampm;
+          const targetPos = label === "am" ? 0 : 1;
+          const scrollPos = ((norm - 360) % 1440 + 1440) % 1440 / 720;
+          const dist = targetPos - scrollPos % 2;
+          const nearest = Math.round((scrollPos - targetPos) / 2) * 2 + targetPos;
+          const actualDist = nearest - scrollPos;
+          const y = actualDist * INLINE_ITEM_HEIGHT + INLINE_CENTER;
+
+          if (y < -INLINE_ITEM_HEIGHT || y > INLINE_DRUM_HEIGHT + INLINE_ITEM_HEIGHT) return null;
+
+          const absDist = Math.abs(actualDist);
+          const spatial = Math.max(0.08, 1 - absDist * 0.6);
+          const opacity = isActive ? spatial : spatial * 0.15;
+          const scale = Math.max(0.7, 1 - absDist * 0.08);
+
+          return (
+            <div
+              key={label}
+              className="absolute inset-x-0 flex items-center justify-center"
+              style={{
+                height: INLINE_ITEM_HEIGHT,
+                transform: `translateY(${y}px) scale(${scale})`,
+                opacity,
+                transition: "opacity 0.6s ease",
+                willChange: "transform, opacity",
+              }}
+            >
+              <span className="text-xs font-medium text-white">{label}</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+interface InlineDrumProps {
+  type: "hour" | "minute";
+  totalMinutes: number;
+  currentValue: number;
+  items: number[];
+  onTouchStart: (e: React.TouchEvent) => void;
+  onWheel: (e: React.WheelEvent) => void;
+  fadeTop: string;
+  fadeBottom: string;
+}
+
+function InlineDrum({ type, totalMinutes, currentValue, items, onTouchStart, onWheel, fadeTop, fadeBottom }: InlineDrumProps) {
+  const count = items.length;
+  const intIndex = Math.floor(currentValue);
+  const fraction = currentValue - intIndex;
+
+  const renderCount = INLINE_VISIBLE + 4;
+  const halfRender = Math.floor(renderCount / 2);
+
+  const norm = normalizeMinutes(totalMinutes);
+  const ownerHour24 = Math.floor(norm / 60);
+  const ownerHour12 = to12Hour(ownerHour24);
+  const minuteInHour = norm % 60;
+  const minuteProgress = minuteInHour / 60;
+
+  const isHour = type === "hour";
+
+  return (
+    <div
+      className="relative overflow-hidden touch-none select-none"
+      style={{ height: INLINE_DRUM_HEIGHT, width: isHour ? 44 : 36 }}
+      onTouchStart={onTouchStart}
+      onWheel={onWheel}
+      data-testid={`inline-drum-${type}`}
+    >
+      <div className="absolute inset-x-0 top-0 pointer-events-none z-20" style={{ height: INLINE_CENTER, background: fadeTop }} />
+      <div className="absolute inset-x-0 bottom-0 pointer-events-none z-20" style={{ height: INLINE_CENTER, background: fadeBottom }} />
+
+      {Array.from({ length: renderCount }, (_, i) => {
+        const offset = i - halfRender;
+        const itemIndex = ((intIndex + offset) % count + count) % count;
+        const y = (offset - fraction) * INLINE_ITEM_HEIGHT + INLINE_CENTER;
+
+        if (y < -INLINE_ITEM_HEIGHT || y > INLINE_DRUM_HEIGHT + INLINE_ITEM_HEIGHT) return null;
+
+        const distFromCenter = Math.abs(offset - fraction);
+        const scale = Math.max(0.7, 1 - distFromCenter * 0.08);
+
+        let opacity: number;
+
+        if (isHour) {
+          const hourVal = items[itemIndex];
+          if (hourVal === ownerHour12) {
+            opacity = 1;
+          } else {
+            const nextHour12 = to12Hour((ownerHour24 + 1) % 24);
+            const prevHour12 = to12Hour((ownerHour24 - 1 + 24) % 24);
+            if (hourVal === nextHour12) {
+              const fade = minuteProgress > 0.75 ? (minuteProgress - 0.75) * 4 : 0;
+              opacity = 0.12 + fade * 0.5;
+            } else if (hourVal === prevHour12) {
+              const fade = minuteProgress < 0.25 ? (0.25 - minuteProgress) * 4 : 0;
+              opacity = 0.12 + fade * 0.5;
+            } else {
+              opacity = 0.08;
+            }
+          }
+        } else {
+          opacity = Math.max(0.08, 1 - distFromCenter * 0.4);
+        }
+
+        return (
+          <div
+            key={i}
+            className="absolute inset-x-0 flex items-center justify-center"
+            style={{
+              height: INLINE_ITEM_HEIGHT,
+              transform: `translateY(${y}px) scale(${scale})`,
+              opacity,
+              willChange: "transform, opacity",
+            }}
+          >
+            <span className={cn(
+              "tabular-nums text-foreground",
+              isHour ? "text-2xl font-semibold" : "text-lg font-light"
+            )}>
+              {isHour
+                ? items[itemIndex].toString()
+                : items[itemIndex].toString().padStart(2, "0")
+              }
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
