@@ -230,7 +230,7 @@ export default function TimePicker({ value, onChange, onClose, label }: TimePick
             onWheel={handleWheel("minute")}
           />
 
-          <div className="-ml-2">
+          <div className="-ml-5">
             <AmPmDrum totalMinutes={totalMinutes} />
           </div>
         </div>
