@@ -364,15 +364,12 @@ const AMPM_CENTER = Math.floor(AMPM_VISIBLE / 2) * AMPM_ITEM_HEIGHT;
 const MONTH_MINUTES = 30 * 24 * 60;
 
 function AmPmDrum({ totalMinutes }: { totalMinutes: number }) {
-  const norm = normalizeMinutes(totalMinutes);
-  const continuousValue = norm / 720 * 0.7;
-
-  const count = AMPM_ITEMS.length;
-  const intIndex = Math.floor(continuousValue);
-  const frac = continuousValue - intIndex;
+  const scrollPos = totalMinutes / 720;
 
   const renderCount = AMPM_VISIBLE + 2;
   const halfRender = Math.floor(renderCount / 2);
+  const intScroll = Math.floor(scrollPos);
+  const frac = scrollPos - intScroll;
 
   return (
     <div
@@ -396,7 +393,7 @@ function AmPmDrum({ totalMinutes }: { totalMinutes: number }) {
 
       {Array.from({ length: renderCount }, (_, i) => {
         const offset = i - halfRender;
-        const itemIdx = ((intIndex + offset) % count + count) % count;
+        const itemIdx = ((intScroll + offset) % 2 + 200) % 2;
         const y = (offset - frac) * AMPM_ITEM_HEIGHT + AMPM_CENTER;
 
         if (y < -AMPM_ITEM_HEIGHT || y > AMPM_DRUM_HEIGHT + AMPM_ITEM_HEIGHT) return null;
