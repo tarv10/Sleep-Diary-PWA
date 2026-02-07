@@ -199,7 +199,14 @@ export default function TimePicker({ value, onChange, onClose, label }: TimePick
             onWheel={handleWheel("hour")}
           />
 
-          <div className="text-5xl font-light text-foreground/20 select-none -mx-1">:</div>
+          <div className="relative select-none -mx-1" style={{ height: DRUM_HEIGHT }}>
+            <div
+              className="absolute inset-x-0 flex items-center justify-center text-5xl font-light text-foreground/20"
+              style={{ top: CENTER_OFFSET, height: ITEM_HEIGHT }}
+            >
+              :
+            </div>
+          </div>
 
           <Drum
             type="minute"
@@ -257,11 +264,6 @@ function Drum({ type, totalMinutes, currentValue, items, onTouchStart, onWheel }
       onWheel={onWheel}
       data-testid={`drum-${type}`}
     >
-      <div
-        className="absolute left-0 right-0 pointer-events-none z-10 border-y border-zone-sleep/15"
-        style={{ top: CENTER_OFFSET, height: ITEM_HEIGHT }}
-      />
-
       <div
         className="absolute inset-x-0 top-0 pointer-events-none z-20"
         style={{
