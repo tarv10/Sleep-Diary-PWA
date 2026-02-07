@@ -21,8 +21,8 @@ export default function HistoryPage() {
 
   return (
     <div className="px-5 pt-6 pb-24">
-      <h1 className="text-xl font-medium mb-1">History</h1>
-      <p className="text-xs text-muted-foreground/50 mb-6">
+      <h1 className="text-2xl font-medium mb-1">History</h1>
+      <p className="text-sm text-muted-foreground/50 mb-6">
         {entries.length} {entries.length === 1 ? "entry" : "entries"}
       </p>
 
@@ -44,20 +44,20 @@ export default function HistoryPage() {
               data-testid={`entry-${entry.date}`}
             >
               <div className="min-w-0 flex-1">
-                <div className="text-sm font-medium text-foreground">
+                <div className="text-base font-medium text-foreground">
                   {formatDisplayDate(entry.date)}
                 </div>
-                <div className="text-xs text-muted-foreground/40 mt-0.5 tabular-nums">
+                <div className="text-sm text-muted-foreground/40 mt-0.5 tabular-nums">
                   {entry.bedtime} — {entry.wakeTime}
                 </div>
               </div>
 
               <div className="flex items-center gap-5 flex-shrink-0">
                 <div className="text-right">
-                  <div className="text-sm tabular-nums font-light text-foreground">
+                  <div className="text-base tabular-nums font-light text-foreground">
                     {formatDuration(m.totalSleep)}
                   </div>
-                  <div className="text-[10px] text-muted-foreground/40 tabular-nums">
+                  <div className="text-xs text-muted-foreground/40 tabular-nums">
                     {formatEfficiency(m.sleepEfficiency)}
                   </div>
                 </div>

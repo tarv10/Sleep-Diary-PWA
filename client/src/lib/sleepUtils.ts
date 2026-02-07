@@ -137,3 +137,73 @@ export function feelingLabel(n: number): string {
   };
   return labels[n] || "";
 }
+
+export type SleepQuality = "good" | "ok" | "poor";
+
+export function getSleepQuality(entry: {
+  bedtime: string;
+  sleepTime: string;
+  wakeTime: string;
+  nightWakings: Array<{ start: string; end: string }>;
+  napStart: string | null;
+  napEnd: string | null;
+  feeling: number;
+}): SleepQuality {
+  const m = calculateMetrics(entry);
+
+  let score = 0;
+
+  if (m.sleepEfficiency >= 85) score += 2;
+  else if (m.sleepEfficiency >= 75) score += 1;
+
+  const sleepHours = m.totalSleep / 60;
+  if (sleepHours >= 7) score += 2;
+  else if (sleepHours >= 6) score += 1;
+
+  if (entry.feeling >= 4) score += 2;
+  else if (entry.feeling >= 3) score += 1;
+
+  if (score >= 5) return "good";
+  if (score >= 3) return "ok";
+  return "poor";
+}
+
+export function getCalendarDays(year: number, month: number): { date: string; day: number; inMonth: boolean }[] {
+  const firstDay = new Date(year, month, 1);
+  const startDow = firstDay.getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  const prevMonthDays = new Date(year, month, 0).getDate();
+
+  const days: { date: string; day: number; inMonth: boolean }[] = [];
+
+  for (let i = startDow - 1; i >= 0; i--) {
+    const d = prevMonthDays - i;
+    const prevMonth = month === 0 ? 11 : month - 1;
+    const prevYear = month === 0 ? year - 1 : year;
+    const dateStr = `${prevYear}-${String(prevMonth + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    days.push({ date: dateStr, day: d, inMonth: false });
+  }
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    days.push({ date: dateStr, day: d, inMonth: true });
+  }
+
+  const remaining = 7 - (days.length % 7);
+  if (remaining < 7) {
+    for (let d = 1; d <= remaining; d++) {
+      const nextMonth = month === 11 ? 0 : month + 1;
+      const nextYear = month === 11 ? year + 1 : year;
+      const dateStr = `${nextYear}-${String(nextMonth + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+      days.push({ date: dateStr, day: d, inMonth: false });
+    }
+  }
+
+  return days;
+}
+
+export function formatMonthYear(year: number, month: number): string {
+  const d = new Date(year, month, 1);
+  return d.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+}
