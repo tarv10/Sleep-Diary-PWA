@@ -63,7 +63,7 @@ export default function TimePicker({ value, onChange, onClose, label }: TimePick
   }, []);
 
   const snapAndAnimate = useCallback((fromMinutes: number, vel: number, drum: "hour" | "minute") => {
-    const scale = drum === "hour" ? 60 : 15;
+    const scale = drum === "hour" ? 30 : 7.5;
     const pixelVelocity = vel;
     let currentMinutes = fromMinutes;
     let currentVelocity = pixelVelocity * scale / ITEM_HEIGHT;
@@ -118,7 +118,7 @@ export default function TimePicker({ value, onChange, onClose, label }: TimePick
 
     const y = e.touches[0].clientY;
     const dy = y - dragStartY.current;
-    const scale = isDragging.current === "hour" ? 60 / ITEM_HEIGHT : 15 / ITEM_HEIGHT;
+    const scale = isDragging.current === "hour" ? 30 / ITEM_HEIGHT : 7.5 / ITEM_HEIGHT;
     const newTotal = dragStartMinutes.current - dy * scale;
 
     const now = Date.now();
@@ -150,7 +150,7 @@ export default function TimePicker({ value, onChange, onClose, label }: TimePick
   const handleWheel = useCallback((drum: "hour" | "minute") => (e: React.WheelEvent) => {
     e.preventDefault();
     cancelAnimationFrame(animFrame.current);
-    const scale = drum === "hour" ? 60 / ITEM_HEIGHT : 15 / ITEM_HEIGHT;
+    const scale = drum === "hour" ? 30 / ITEM_HEIGHT : 7.5 / ITEM_HEIGHT;
     const delta = e.deltaY * scale;
     const newTotal = totalMinutesRef.current + delta;
     const snapped = Math.round(newTotal / 15) * 15;
