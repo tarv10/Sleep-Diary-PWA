@@ -653,26 +653,48 @@ function NapSlider({ value, onChange }: { value: number; onChange: (v: number) =
     { min: 15, label: "15m" },
     { min: 30, label: "30m" },
     { min: 45, label: "45m" },
-    { min: 90, label: "1.5h" },
+    { min: 60, label: "1h" },
+    { min: 120, label: "2h" },
     { min: 180, label: "3h" },
   ];
 
+  const pct = sliderPos * 100;
+
   return (
-    <div className="pt-1 pb-2" data-testid="slider-nap">
+    <div className="pt-2 pb-2" data-testid="slider-nap">
       <input
         type="range"
-        min={0}
-        max={1}
-        step={0.005}
+        min="0"
+        max="1"
+        step="0.005"
         value={sliderPos}
+        onInput={handleInput}
         onChange={handleInput}
-        className="w-full h-1.5 appearance-none rounded-full cursor-pointer nap-slider"
-        style={{
-          background: `linear-gradient(to right, var(--zone-disruption) ${sliderPos * 100}%, rgba(255,255,255,0.08) ${sliderPos * 100}%)`,
-        }}
+        className="nap-slider"
         data-testid="input-nap-slider"
+        style={{
+          width: "100%",
+          height: "36px",
+          WebkitAppearance: "none",
+          appearance: "none" as const,
+          background: "transparent",
+          cursor: "pointer",
+          touchAction: "none",
+        }}
       />
-      <div className="flex justify-between mt-1.5 px-0.5">
+      <style>{`
+        .nap-slider::-webkit-slider-runnable-track {
+          height: 6px;
+          border-radius: 3px;
+          background: linear-gradient(to right, var(--zone-disruption) ${pct}%, rgba(255,255,255,0.08) ${pct}%);
+        }
+        .nap-slider::-moz-range-track {
+          height: 6px;
+          border-radius: 3px;
+          background: linear-gradient(to right, var(--zone-disruption) ${pct}%, rgba(255,255,255,0.08) ${pct}%);
+        }
+      `}</style>
+      <div className="flex justify-between mt-0 px-0.5">
         {ticks.map((t) => (
           <span
             key={t.min}
