@@ -239,7 +239,17 @@ export default function TimePicker({ value, onChange, onClose, label }: TimePick
           />
 
           <div className="ml-1">
-            <AmPmDrum totalMinutes={totalMinutes} />
+            <AmPmStatic
+              totalMinutes={totalMinutes}
+              onToggle={() => {
+                cancelAnimationFrame(animFrame.current);
+                const current = totalMinutesRef.current;
+                const norm = normalizeMinutes(current);
+                const target = norm < 720 ? current + 720 : current - 720;
+                totalMinutesRef.current = target;
+                setTotalMinutes(target);
+              }}
+            />
           </div>
         </div>
 
@@ -371,74 +381,25 @@ function Drum({ type, totalMinutes, currentValue, items, onTouchStart, onWheel }
   );
 }
 
-const AMPM_ITEMS = ["am", "pm"];
-const AMPM_ITEM_HEIGHT = ITEM_HEIGHT;
-const AMPM_DRUM_HEIGHT = DRUM_HEIGHT;
-const AMPM_CENTER = CENTER_OFFSET;
-
-function AmPmDrum({ totalMinutes }: { totalMinutes: number }) {
+function AmPmStatic({ totalMinutes, onToggle }: { totalMinutes: number; onToggle: () => void }) {
   const norm = normalizeMinutes(totalMinutes);
-  const scrollPos = ((norm - 360) % 1440 + 1440) % 1440 / 720;
-
-  const isAM = norm < 720;
-
-  const nearestAm = Math.round(scrollPos / 2) * 2;
-  const nearestPm = Math.round((scrollPos - 1) / 2) * 2 + 1;
-
-  const items = [
-    { label: "am", pos: nearestAm, active: isAM },
-    { label: "pm", pos: nearestPm, active: !isAM },
-  ];
+  const label = norm < 720 ? "am" : "pm";
 
   return (
     <div
-      className="relative overflow-hidden touch-none select-none"
-      style={{ height: AMPM_DRUM_HEIGHT, width: 36 }}
+      className="relative select-none cursor-pointer"
+      style={{ height: DRUM_HEIGHT }}
+      onClick={onToggle}
+      data-testid="drum-ampm"
     >
       <div
-        className="absolute inset-x-0 top-0 pointer-events-none z-20"
-        style={{
-          height: AMPM_CENTER,
-          background: "linear-gradient(to bottom, #161b22 0%, #161b22cc 40%, transparent 100%)",
-        }}
-      />
-      <div
-        className="absolute inset-x-0 bottom-0 pointer-events-none z-20"
-        style={{
-          height: AMPM_CENTER,
-          background: "linear-gradient(to top, #161b22 0%, #161b22cc 40%, transparent 100%)",
-        }}
-      />
-
-      {items.map(({ label, pos, active }) => {
-        const dist = pos - scrollPos;
-        const y = dist * AMPM_ITEM_HEIGHT + AMPM_CENTER;
-
-        if (y < -AMPM_ITEM_HEIGHT || y > AMPM_DRUM_HEIGHT + AMPM_ITEM_HEIGHT) return null;
-
-        const absDist = Math.abs(dist);
-        const spatial = Math.max(0.08, 1 - absDist * 0.6);
-        const opacity = active ? spatial : spatial * 0.15;
-        const scale = Math.max(0.7, 1 - absDist * 0.08);
-
-        return (
-          <div
-            key={label}
-            className="absolute inset-x-0 flex items-center justify-center"
-            style={{
-              height: AMPM_ITEM_HEIGHT,
-              transform: `translateY(${y}px) scale(${scale})`,
-              opacity,
-              transition: "opacity 0.6s ease",
-              willChange: "transform, opacity",
-            }}
-          >
-            <span className="text-lg font-medium text-white">
-              {label}
-            </span>
-          </div>
-        );
-      })}
+        className="absolute inset-x-0 flex items-end justify-center"
+        style={{ top: CENTER_OFFSET, height: ITEM_HEIGHT, paddingBottom: 10 }}
+      >
+        <span className="text-lg font-medium text-white/70 transition-opacity duration-300">
+          {label}
+        </span>
+      </div>
     </div>
   );
 }
@@ -647,49 +608,27 @@ export function InlineTimePicker({ value, onChange, fadeBg = "#0D1117", testId }
       />
 
       <div
-        className="relative overflow-hidden touch-none select-none ml-0.5 cursor-pointer"
-        style={{ height: INLINE_DRUM_HEIGHT, width: 24 }}
+        className="relative select-none ml-0.5 cursor-pointer"
+        style={{ height: INLINE_DRUM_HEIGHT, width: 22 }}
         onClick={() => {
           cancelAnimationFrame(animFrame.current);
-          const target = totalMinutesRef.current + (ampm === "am" ? 720 : -720);
-          animateToTarget(totalMinutesRef.current, target);
+          const current = totalMinutesRef.current;
+          const n = normalizeMinutes(current);
+          const target = n < 720 ? current + 720 : current - 720;
+          totalMinutesRef.current = target;
+          setTotalMinutes(target);
+          emitChange(target);
         }}
         data-testid="inline-drum-ampm"
       >
-        <div className="absolute inset-x-0 top-0 pointer-events-none z-20" style={{ height: INLINE_CENTER, background: fadeTop }} />
-        <div className="absolute inset-x-0 bottom-0 pointer-events-none z-20" style={{ height: INLINE_CENTER, background: fadeBottom }} />
-        {["am", "pm"].map((label) => {
-          const isActive = label === ampm;
-          const targetPos = label === "am" ? 0 : 1;
-          const scrollPos = ((norm - 360) % 1440 + 1440) % 1440 / 720;
-          const dist = targetPos - scrollPos % 2;
-          const nearest = Math.round((scrollPos - targetPos) / 2) * 2 + targetPos;
-          const actualDist = nearest - scrollPos;
-          const y = actualDist * INLINE_ITEM_HEIGHT + INLINE_CENTER;
-
-          if (y < -INLINE_ITEM_HEIGHT || y > INLINE_DRUM_HEIGHT + INLINE_ITEM_HEIGHT) return null;
-
-          const absDist = Math.abs(actualDist);
-          const spatial = Math.max(0.08, 1 - absDist * 0.6);
-          const opacity = isActive ? spatial : spatial * 0.15;
-          const scale = Math.max(0.7, 1 - absDist * 0.08);
-
-          return (
-            <div
-              key={label}
-              className="absolute inset-x-0 flex items-center justify-center pointer-events-none"
-              style={{
-                height: INLINE_ITEM_HEIGHT,
-                transform: `translateY(${y}px) scale(${scale})`,
-                opacity,
-                transition: "opacity 0.6s ease",
-                willChange: "transform, opacity",
-              }}
-            >
-              <span className="text-xs font-medium text-white">{label}</span>
-            </div>
-          );
-        })}
+        <div
+          className="absolute inset-x-0 flex items-end justify-center"
+          style={{ top: INLINE_CENTER, height: INLINE_ITEM_HEIGHT, paddingBottom: 2 }}
+        >
+          <span className="text-[11px] font-medium text-white/60 transition-opacity duration-300">
+            {ampm}
+          </span>
+        </div>
       </div>
     </div>
   );
