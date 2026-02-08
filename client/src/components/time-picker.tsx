@@ -357,7 +357,7 @@ function Drum({ type, totalMinutes, currentValue, items, onTouchStart, onWheel }
         return (
           <div
             key={i}
-            className="absolute inset-x-0 flex items-end justify-center pb-[10px]"
+            className={cn("absolute inset-x-0 flex items-end justify-center", isHour ? "pb-[10px]" : "pb-[11px]")}
             style={{
               height: ITEM_HEIGHT,
               transform: `translateY(${y}px) scale(${scale})`,
@@ -399,7 +399,7 @@ function AmPmStatic({ totalMinutes, onToggle, size }: { totalMinutes: number; on
       data-testid="drum-ampm"
     >
       <div
-        className={cn("absolute inset-x-0 flex items-end", isPopup ? "pb-[10px]" : "pb-[4px]")}
+        className={cn("absolute inset-x-0 flex items-end", isPopup ? "pb-[14px]" : "pb-[6px]")}
         style={{ top: centerOffset, height: itemHeight }}
       >
         <span
@@ -716,7 +716,7 @@ function InlineDrum({ type, totalMinutes, currentValue, items, onTouchStart, onW
         return (
           <div
             key={i}
-            className="absolute inset-x-0 flex items-end justify-center pb-[4px]"
+            className={cn("absolute inset-x-0 flex items-end justify-center", isHour ? "pb-[4px]" : "pb-[5px]")}
             style={{
               height: INLINE_ITEM_HEIGHT,
               transform: `translateY(${y}px) scale(${scale})`,
