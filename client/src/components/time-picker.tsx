@@ -357,7 +357,7 @@ function Drum({ type, totalMinutes, currentValue, items, onTouchStart, onWheel }
         return (
           <div
             key={i}
-            className={cn("absolute inset-x-0 flex items-end justify-center", isHour ? "pb-[10px]" : "pb-[11px]")}
+            className={cn("absolute inset-x-0 flex items-end justify-center", isHour ? "pb-[10px]" : "pb-[9px]")}
             style={{
               height: ITEM_HEIGHT,
               transform: `translateY(${y}px) scale(${scale})`,
@@ -716,7 +716,7 @@ function InlineDrum({ type, totalMinutes, currentValue, items, onTouchStart, onW
         return (
           <div
             key={i}
-            className={cn("absolute inset-x-0 flex items-end justify-center", isHour ? "pb-[4px]" : "pb-[5px]")}
+            className={cn("absolute inset-x-0 flex items-end justify-center", isHour ? "pb-[4px]" : "pb-[3px]")}
             style={{
               height: INLINE_ITEM_HEIGHT,
               transform: `translateY(${y}px) scale(${scale})`,
