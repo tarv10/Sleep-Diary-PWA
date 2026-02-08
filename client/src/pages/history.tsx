@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import type { SleepEntry } from "@shared/schema";
-import { getAllEntries } from "@/lib/storage";
+import { getAllEntries, getSettings, getFactorValue } from "@/lib/storage";
 import {
   calculateMetrics,
   formatDuration,
@@ -12,6 +12,7 @@ import {
 
 export default function HistoryPage() {
   const [entries, setEntries] = useState<SleepEntry[]>([]);
+  const factorDefs = getSettings().factors;
   const [, navigate] = useLocation();
 
   useEffect(() => {
@@ -34,7 +35,10 @@ export default function HistoryPage() {
       <div className="space-y-0">
         {entries.map((entry) => {
           const m = calculateMetrics(entry);
-          const hasSubs = entry.drinks > 0 || entry.weed;
+          const activeFactors = factorDefs.filter((f) => {
+            const val = getFactorValue(entry, f.id);
+            return f.type === "integer" ? (val as number) > 0 : !!val;
+          });
           return (
             <button
               key={entry.id}
@@ -48,11 +52,18 @@ export default function HistoryPage() {
                 </div>
                 <div className="text-xs text-muted-foreground/30 mt-0.5 tabular-nums">
                   {entry.bedtime} — {entry.wakeTime}
-                  {hasSubs && (
+                  {activeFactors.length > 0 && (
                     <span className="text-zone-substance/50 ml-1.5">
-                      {entry.drinks > 0 && `${entry.drinks}d`}
-                      {entry.drinks > 0 && entry.weed && " · "}
-                      {entry.weed && "w"}
+                      {activeFactors.map((f, i) => {
+                        const val = getFactorValue(entry, f.id);
+                        const display = f.type === "integer" ? `${val}` : f.label.charAt(0).toLowerCase();
+                        return (
+                          <span key={f.id}>
+                            {i > 0 && " · "}
+                            {display}
+                          </span>
+                        );
+                      })}
                     </span>
                   )}
                 </div>

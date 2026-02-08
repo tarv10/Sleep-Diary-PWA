@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Download, Trash2, Lock, Unlock, Clock } from "lucide-react";
+import { Download, Trash2, Lock, Unlock, Clock, Plus, X, GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
@@ -11,11 +11,12 @@ import {
   clearAllData,
   seedIfEmpty,
   setUnlocked,
+  generateId,
 } from "@/lib/storage";
 import { toDateString, addDays } from "@/lib/sleepUtils";
 import { InlineTimePicker } from "@/components/time-picker";
 import { cn } from "@/lib/utils";
-import type { AppSettings } from "@shared/schema";
+import type { AppSettings, FactorDefinition } from "@shared/schema";
 
 export default function SettingsPage() {
   const { toast } = useToast();
@@ -258,6 +259,42 @@ export default function SettingsPage() {
         </div>
       </Section>
 
+      <Section label="Factors">
+        <div className="py-2 space-y-0">
+          {settings.factors.map((factor, idx) => (
+            <FactorRow
+              key={factor.id}
+              factor={factor}
+              isFirst={idx === 0}
+              onUpdate={(updated) => {
+                const factors = settings.factors.map((f) =>
+                  f.id === factor.id ? updated : f
+                );
+                const s = { ...settings, factors };
+                saveSettings(s);
+                setSettingsState(s);
+              }}
+              onDelete={() => {
+                const factors = settings.factors.filter((f) => f.id !== factor.id);
+                const s = { ...settings, factors };
+                saveSettings(s);
+                setSettingsState(s);
+                toast({ title: `Removed "${factor.label}"` });
+              }}
+            />
+          ))}
+          <AddFactorButton
+            onAdd={(factor) => {
+              const factors = [...settings.factors, factor];
+              const s = { ...settings, factors };
+              saveSettings(s);
+              setSettingsState(s);
+              toast({ title: `Added "${factor.label}"` });
+            }}
+          />
+        </div>
+      </Section>
+
       <Section label="Export">
         <div className="space-y-4 py-4">
           <div className="flex items-center gap-3">
@@ -363,6 +400,213 @@ function Section({
       </div>
       <div className="border-b border-border/8">{children}</div>
     </div>
+  );
+}
+
+function FactorRow({
+  factor,
+  isFirst,
+  onUpdate,
+  onDelete,
+}: {
+  factor: FactorDefinition;
+  isFirst: boolean;
+  onUpdate: (f: FactorDefinition) => void;
+  onDelete: () => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [label, setLabel] = useState(factor.label);
+  const [factorType, setFactorType] = useState<"boolean" | "integer">(factor.type);
+
+  const handleSave = () => {
+    if (!label.trim()) return;
+    onUpdate({ ...factor, label: label.trim(), type: factorType });
+    setEditing(false);
+  };
+
+  if (editing) {
+    return (
+      <div className={cn("py-3", !isFirst && "border-t border-border/8")}>
+        <div className="space-y-3">
+          <input
+            type="text"
+            value={label}
+            onChange={(e) => setLabel(e.target.value)}
+            placeholder="Factor name"
+            className="w-full bg-transparent text-sm text-foreground focus:outline-none border-b border-border/20 pb-1"
+            autoFocus
+            data-testid={`input-factor-label-${factor.id}`}
+          />
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setFactorType("boolean")}
+              className={cn(
+                "text-xs px-3 py-1.5 rounded-md transition-colors",
+                factorType === "boolean"
+                  ? "bg-zone-substance/20 text-zone-substance"
+                  : "text-muted-foreground/40"
+              )}
+              data-testid={`button-type-boolean-${factor.id}`}
+            >
+              Switch
+            </button>
+            <button
+              onClick={() => setFactorType("integer")}
+              className={cn(
+                "text-xs px-3 py-1.5 rounded-md transition-colors",
+                factorType === "integer"
+                  ? "bg-zone-substance/20 text-zone-substance"
+                  : "text-muted-foreground/40"
+              )}
+              data-testid={`button-type-integer-${factor.id}`}
+            >
+              Counter
+            </button>
+          </div>
+          <div className="flex items-center gap-2 justify-end">
+            <button
+              onClick={() => {
+                setEditing(false);
+                setLabel(factor.label);
+                setFactorType(factor.type);
+              }}
+              className="text-xs text-muted-foreground/50 px-3 py-1.5"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={onDelete}
+              className="text-xs text-destructive/70 px-3 py-1.5"
+              data-testid={`button-delete-factor-${factor.id}`}
+            >
+              Delete
+            </button>
+            <button
+              onClick={handleSave}
+              className="text-xs text-zone-substance px-3 py-1.5"
+              data-testid={`button-save-factor-${factor.id}`}
+            >
+              Save
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={cn(
+        "flex items-center justify-between py-3",
+        !isFirst && "border-t border-border/8"
+      )}
+    >
+      <div className="flex items-center gap-2 min-w-0 flex-1">
+        <span className="text-sm text-foreground/80 truncate">{factor.label}</span>
+        <span className="text-[10px] text-muted-foreground/30">
+          {factor.type === "integer" ? "counter" : "switch"}
+        </span>
+      </div>
+      <button
+        onClick={() => setEditing(true)}
+        className="text-[10px] text-zone-substance-muted/50 uppercase tracking-wider px-2 py-1"
+        data-testid={`button-edit-factor-${factor.id}`}
+      >
+        Edit
+      </button>
+    </div>
+  );
+}
+
+function AddFactorButton({ onAdd }: { onAdd: (f: FactorDefinition) => void }) {
+  const [adding, setAdding] = useState(false);
+  const [label, setLabel] = useState("");
+  const [factorType, setFactorType] = useState<"boolean" | "integer">("boolean");
+
+  const handleAdd = () => {
+    if (!label.trim()) return;
+    const id = label.trim().toLowerCase().replace(/\s+/g, "_") + "_" + generateId().slice(-4);
+    onAdd({ id, label: label.trim(), type: factorType });
+    setLabel("");
+    setFactorType("boolean");
+    setAdding(false);
+  };
+
+  if (adding) {
+    return (
+      <div className="py-3 border-t border-border/8">
+        <div className="space-y-3">
+          <input
+            type="text"
+            value={label}
+            onChange={(e) => setLabel(e.target.value)}
+            placeholder="Factor name"
+            className="w-full bg-transparent text-sm text-foreground focus:outline-none border-b border-border/20 pb-1"
+            autoFocus
+            data-testid="input-new-factor-label"
+          />
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setFactorType("boolean")}
+              className={cn(
+                "text-xs px-3 py-1.5 rounded-md transition-colors",
+                factorType === "boolean"
+                  ? "bg-zone-substance/20 text-zone-substance"
+                  : "text-muted-foreground/40"
+              )}
+              data-testid="button-new-type-boolean"
+            >
+              Switch
+            </button>
+            <button
+              onClick={() => setFactorType("integer")}
+              className={cn(
+                "text-xs px-3 py-1.5 rounded-md transition-colors",
+                factorType === "integer"
+                  ? "bg-zone-substance/20 text-zone-substance"
+                  : "text-muted-foreground/40"
+              )}
+              data-testid="button-new-type-integer"
+            >
+              Counter
+            </button>
+          </div>
+          <div className="flex items-center gap-2 justify-end">
+            <button
+              onClick={() => {
+                setAdding(false);
+                setLabel("");
+              }}
+              className="text-xs text-muted-foreground/50 px-3 py-1.5"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleAdd}
+              disabled={!label.trim()}
+              className={cn(
+                "text-xs px-3 py-1.5",
+                label.trim() ? "text-zone-substance" : "text-muted-foreground/20"
+              )}
+              data-testid="button-add-factor-confirm"
+            >
+              Add
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <button
+      onClick={() => setAdding(true)}
+      className="flex items-center gap-2 py-3 border-t border-border/8 w-full"
+      data-testid="button-add-factor"
+    >
+      <Plus className="w-3.5 h-3.5 text-zone-substance-muted/40" />
+      <span className="text-xs text-zone-substance-muted/40">Add factor</span>
+    </button>
   );
 }
 

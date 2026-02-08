@@ -57,7 +57,7 @@ Vertical narrative — a story of the night told top to bottom:
 3. Disruptions (disruption zone) — night wakings, collapsed by default
 4. Nap (disruption zone) — optional, collapsed by default
 5. Metrics strip — total sleep as hero number, efficiency, in bed
-6. Factors (substance zone) — horizontal row: drinks stepper, spliffs toggle, other toggle
+6. Factors (substance zone) — dynamic factors from settings (boolean=switch, integer=counter), "edit factors" link to settings
 7. How I feel (reflection zone) — 1-5 star scale
 8. Notes (reflection zone) — expandable textarea
 9. Save — brief checkmark flash feedback
@@ -68,6 +68,18 @@ Vertical narrative — a story of the night told top to bottom:
 - Quality calendar with color-coded dots (green/amber/red)
 - Charts with correlation overlays (amber circles on substance nights)
 - Correlations section using substance zone colors
+
+## Factors System
+- Factors are user-configurable tracking variables (substance zone)
+- Types: `boolean` (switch) or `integer` (counter with +/- buttons)
+- Default factors: "Alc drinks" (integer, max 15) and "Screens off 1hr" (boolean)
+- Factor definitions stored in `AppSettings.factors` array
+- Factor values per entry stored in `SleepEntry.factorValues` (Record<string, number|boolean>)
+- Legacy fields (`drinks`, `weed`, `insights`) maintained for backward compatibility
+- `getFactorValue()` in storage.ts handles reading from both new and legacy formats
+- Settings page has Factors section for add/edit/delete
+- Log page shows dynamic factor controls with "edit factors" link to settings
+- Dashboard correlations and history indicators are dynamically generated from factor definitions
 
 ## Data Flow
 - All data persists in localStorage

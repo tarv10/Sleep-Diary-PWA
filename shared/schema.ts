@@ -6,6 +6,20 @@ export const nightWakingSchema = z.object({
   end: z.string(),
 });
 
+export const factorDefinitionSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  type: z.enum(["boolean", "integer"]),
+  max: z.number().optional(),
+});
+
+export type FactorDefinition = z.infer<typeof factorDefinitionSchema>;
+
+export const defaultFactors: FactorDefinition[] = [
+  { id: "alc_drinks", label: "Alc drinks", type: "integer", max: 15 },
+  { id: "screens_off", label: "Screens off 1hr", type: "boolean" },
+];
+
 export const sleepEntrySchema = z.object({
   id: z.string(),
   date: z.string(),
@@ -18,6 +32,7 @@ export const sleepEntrySchema = z.object({
   drinks: z.number().min(0).max(15),
   weed: z.boolean(),
   insights: z.boolean(),
+  factorValues: z.record(z.union([z.number(), z.boolean()])).optional(),
   feeling: z.number().min(1).max(5),
   notes: z.string(),
   createdAt: z.string(),
@@ -33,6 +48,7 @@ export interface AppSettings {
   defaultBedtime: string;
   defaultSleepTime: string;
   defaultWakeTime: string;
+  factors: FactorDefinition[];
 }
 
 export const defaultSettings: AppSettings = {
@@ -41,4 +57,5 @@ export const defaultSettings: AppSettings = {
   defaultBedtime: "22:30",
   defaultSleepTime: "23:00",
   defaultWakeTime: "07:00",
+  factors: defaultFactors,
 };

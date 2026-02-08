@@ -5,7 +5,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import TimePicker, { InlineTimePicker } from "@/components/time-picker";
-import type { SleepEntry, NightWaking } from "@shared/schema";
+import type { SleepEntry, NightWaking, FactorDefinition } from "@shared/schema";
 import {
   getEntryByDate,
   saveEntry,
@@ -13,7 +13,9 @@ import {
   generateId,
   getAllEntries,
   getSettings,
+  getFactorValue,
 } from "@/lib/storage";
+import { useLocation } from "wouter";
 import {
   calculateMetrics,
   formatDuration,
@@ -31,6 +33,7 @@ interface LogPageProps {
 
 export default function LogPage({ initialDate }: LogPageProps) {
   const defaults = getSettings();
+  const [, navigate] = useLocation();
   const [date, setDate] = useState(initialDate || getYesterday());
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [bedtime, setBedtime] = useState(defaults.defaultBedtime);
@@ -39,9 +42,12 @@ export default function LogPage({ initialDate }: LogPageProps) {
   const [nightWakings, setNightWakings] = useState<NightWaking[]>([]);
   const [hasNap, setHasNap] = useState(false);
   const [napMinutes, setNapMinutes] = useState(30);
-  const [drinks, setDrinks] = useState(0);
-  const [weed, setWeed] = useState(false);
-  const [insights, setInsights] = useState(false);
+  const factorDefs = defaults.factors;
+  const initFV: Record<string, number | boolean> = {};
+  factorDefs.forEach((f) => {
+    initFV[f.id] = f.type === "integer" ? 0 : false;
+  });
+  const [factorValues, setFactorValues] = useState<Record<string, number | boolean>>(initFV);
   const [feeling, setFeeling] = useState(3);
   const [notes, setNotes] = useState("");
   const [existingId, setExistingId] = useState<string | null>(null);
@@ -81,9 +87,11 @@ export default function LogPage({ initialDate }: LogPageProps) {
       } else {
         setNapMinutes(30);
       }
-      setDrinks(entry.drinks);
-      setWeed(entry.weed);
-      setInsights(entry.insights);
+      const loadedFV: Record<string, number | boolean> = {};
+      factorDefs.forEach((f) => {
+        loadedFV[f.id] = getFactorValue(entry, f.id);
+      });
+      setFactorValues(loadedFV);
       setFeeling(entry.feeling);
       setNotes(entry.notes);
       setExistingId(entry.id);
@@ -96,9 +104,11 @@ export default function LogPage({ initialDate }: LogPageProps) {
       setNightWakings([]);
       setHasNap(false);
       setNapMinutes(30);
-      setDrinks(0);
-      setWeed(false);
-      setInsights(false);
+      const resetFV: Record<string, number | boolean> = {};
+      factorDefs.forEach((f) => {
+        resetFV[f.id] = f.type === "integer" ? 0 : false;
+      });
+      setFactorValues(resetFV);
       setFeeling(3);
       setNotes("");
       setExistingId(null);
@@ -139,9 +149,10 @@ export default function LogPage({ initialDate }: LogPageProps) {
       nightWakings,
       napStart: hasNap && napMinutes > 0 ? "14:00" : null,
       napEnd: hasNap && napMinutes > 0 ? napEndTime : null,
-      drinks,
-      weed,
-      insights,
+      drinks: typeof factorValues["alc_drinks"] === "number" ? (factorValues["alc_drinks"] as number) : 0,
+      weed: false,
+      insights: false,
+      factorValues,
       feeling,
       notes,
       createdAt:
@@ -166,9 +177,11 @@ export default function LogPage({ initialDate }: LogPageProps) {
       setWakeTime(s.defaultWakeTime);
       setNightWakings([]);
       setHasNap(false);
-      setDrinks(0);
-      setWeed(false);
-      setInsights(false);
+      const resetFV: Record<string, number | boolean> = {};
+      factorDefs.forEach((f) => {
+        resetFV[f.id] = f.type === "integer" ? 0 : false;
+      });
+      setFactorValues(resetFV);
       setFeeling(3);
       setNotes("");
     }
@@ -470,53 +483,72 @@ export default function LogPage({ initialDate }: LogPageProps) {
       <div className="mb-8 rounded-md bg-zone-substance-bg/60 px-4 py-3 -mx-1">
         <ZoneLabel color="substance">Factors</ZoneLabel>
 
-        <div className="flex items-center justify-between py-2">
-          <span className="text-sm text-foreground/70">Drinks</span>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setDrinks(Math.max(0, drinks - 1))}
-              disabled={drinks === 0}
-              className={cn(
-                "w-8 h-8 rounded-full flex items-center justify-center text-base font-light transition-colors",
-                drinks === 0 ? "text-muted-foreground/20" : "text-zone-substance active:bg-zone-substance/15"
-              )}
-              data-testid="button-drinks-minus"
-            >
-              −
-            </button>
-            <span
-              className="text-xl font-light tabular-nums w-5 text-center text-foreground"
-              data-testid="text-drinks-count"
-            >
-              {drinks}
-            </span>
-            <button
-              onClick={() => setDrinks(Math.min(15, drinks + 1))}
-              className="w-8 h-8 rounded-full flex items-center justify-center text-base font-light text-zone-substance active:bg-zone-substance/15 transition-colors"
-              data-testid="button-drinks-plus"
-            >
-              +
-            </button>
+        {factorDefs.map((factor, idx) => (
+          <div
+            key={factor.id}
+            className={cn(
+              "flex items-center justify-between py-2",
+              idx > 0 && "border-t border-zone-substance/8"
+            )}
+          >
+            <span className="text-sm text-foreground/70">{factor.label}</span>
+            {factor.type === "integer" ? (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    const cur = (factorValues[factor.id] as number) || 0;
+                    setFactorValues({ ...factorValues, [factor.id]: Math.max(0, cur - 1) });
+                  }}
+                  disabled={((factorValues[factor.id] as number) || 0) === 0}
+                  className={cn(
+                    "w-8 h-8 rounded-full flex items-center justify-center text-base font-light transition-colors",
+                    ((factorValues[factor.id] as number) || 0) === 0
+                      ? "text-muted-foreground/20"
+                      : "text-zone-substance active:bg-zone-substance/15"
+                  )}
+                  data-testid={`button-${factor.id}-minus`}
+                >
+                  −
+                </button>
+                <span
+                  className="text-xl font-light tabular-nums w-5 text-center text-foreground"
+                  data-testid={`text-${factor.id}-count`}
+                >
+                  {(factorValues[factor.id] as number) || 0}
+                </span>
+                <button
+                  onClick={() => {
+                    const cur = (factorValues[factor.id] as number) || 0;
+                    const max = factor.max || 99;
+                    setFactorValues({ ...factorValues, [factor.id]: Math.min(max, cur + 1) });
+                  }}
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-base font-light text-zone-substance active:bg-zone-substance/15 transition-colors"
+                  data-testid={`button-${factor.id}-plus`}
+                >
+                  +
+                </button>
+              </div>
+            ) : (
+              <Switch
+                checked={!!factorValues[factor.id]}
+                onCheckedChange={(checked) => {
+                  setFactorValues({ ...factorValues, [factor.id]: checked });
+                }}
+                data-testid={`switch-${factor.id}`}
+              />
+            )}
           </div>
-        </div>
+        ))}
 
-        <div className="flex items-center justify-between py-2 border-t border-zone-substance/8">
-          <span className="text-sm text-foreground/70">Spliffs</span>
-          <Switch
-            checked={weed}
-            onCheckedChange={setWeed}
-            data-testid="switch-weed"
-          />
-        </div>
-
-        <div className="flex items-center justify-between py-2 border-t border-zone-substance/8">
-          <span className="text-sm text-foreground/70">Other</span>
-          <Switch
-            checked={insights}
-            onCheckedChange={setInsights}
-            data-testid="switch-insights"
-          />
-        </div>
+        <button
+          onClick={() => navigate("/settings")}
+          className="w-full text-center pt-2 mt-1 border-t border-zone-substance/8"
+          data-testid="button-edit-factors"
+        >
+          <span className="text-[10px] text-zone-substance-muted/50 uppercase tracking-[0.15em]">
+            edit factors
+          </span>
+        </button>
       </div>
 
       {/* ── How I Feel (Reflection Zone) ── */}

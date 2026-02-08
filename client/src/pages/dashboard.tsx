@@ -12,8 +12,8 @@ import {
 import { ChevronLeft, ChevronRight, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type { SleepEntry } from "@shared/schema";
-import { getAllEntries } from "@/lib/storage";
+import type { SleepEntry, FactorDefinition } from "@shared/schema";
+import { getAllEntries, getSettings, getFactorValue } from "@/lib/storage";
 import {
   calculateMetrics,
   formatDuration,
@@ -43,6 +43,7 @@ const QUALITY_COLORS: Record<SleepQuality, string> = {
 
 export default function DashboardPage() {
   const [entries, setEntries] = useState<SleepEntry[]>([]);
+  const factorDefs = getSettings().factors;
   const [period, setPeriod] = useState<"week" | "month">("week");
 
   const todayStr = toDateString(new Date());
@@ -71,20 +72,22 @@ export default function DashboardPage() {
           sleepHours: null,
           efficiency: null,
           feeling: null,
-          hasDrinks: false,
-          hasWeed: false,
+          hasAnyFactor: false,
         };
       const m = calculateMetrics(entry);
+      const hasAnyFactor = factorDefs.some((f) => {
+        const val = getFactorValue(entry, f.id);
+        return f.type === "integer" ? (val as number) > 0 : !!val;
+      });
       return {
         date: formatShortDate(d),
         sleepHours: Math.round((m.totalSleep / 60) * 10) / 10,
         efficiency: Math.round(m.sleepEfficiency),
         feeling: entry.feeling,
-        hasDrinks: entry.drinks > 0,
-        hasWeed: entry.weed,
+        hasAnyFactor,
       };
     });
-  }, [filtered, range]);
+  }, [filtered, range, factorDefs]);
 
   const averages = useMemo(() => {
     if (filtered.length === 0) return null;
@@ -138,22 +141,23 @@ export default function DashboardPage() {
       };
     };
 
-    const withD = filtered.filter((e) => e.drinks > 0);
-    const noD = filtered.filter((e) => e.drinks === 0);
-    const withW = filtered.filter((e) => e.weed);
-    const noW = filtered.filter((e) => !e.weed);
+    const result: Record<string, { label: string; with: ReturnType<typeof calc>; without: ReturnType<typeof calc> } | null> = {};
 
-    return {
-      drinks:
-        withD.length > 0 && noD.length > 0
-          ? { with: calc(withD), without: calc(noD) }
-          : null,
-      weed:
-        withW.length > 0 && noW.length > 0
-          ? { with: calc(withW), without: calc(noW) }
-          : null,
-    };
-  }, [filtered]);
+    factorDefs.forEach((f) => {
+      const isActive = (e: SleepEntry) => {
+        const val = getFactorValue(e, f.id);
+        return f.type === "integer" ? (val as number) > 0 : !!val;
+      };
+      const withF = filtered.filter(isActive);
+      const withoutF = filtered.filter((e) => !isActive(e));
+      result[f.id] =
+        withF.length > 0 && withoutF.length > 0
+          ? { label: f.label, with: calc(withF), without: calc(withoutF) }
+          : null;
+    });
+
+    return result;
+  }, [filtered, factorDefs]);
 
   const entryQualityMap = useMemo(() => {
     const map: Record<string, SleepQuality> = {};
@@ -166,7 +170,7 @@ export default function DashboardPage() {
   const substanceDots = useMemo(() => {
     return chartData
       .map((d, i) => ({ ...d, index: i }))
-      .filter((d) => d.hasDrinks || d.hasWeed);
+      .filter((d) => d.hasAnyFactor);
   }, [chartData]);
 
   const calendarDays = getCalendarDays(calYear, calMonth);
@@ -487,30 +491,23 @@ export default function DashboardPage() {
           </ChartSection>
 
           {/* ── Correlations ── */}
-          {correlations && (correlations.drinks || correlations.weed) && (
+          {correlations && Object.values(correlations).some((v) => v !== null) && (
             <div className="mt-2">
               <div className="text-[10px] text-zone-substance-muted uppercase tracking-[0.2em] font-medium mb-6">
                 Correlations
               </div>
 
-              {correlations.drinks && (
-                <CorrelationBlock
-                  title="Alcohol"
-                  withLabel="With drinks"
-                  withData={correlations.drinks.with}
-                  withoutLabel="No drinks"
-                  withoutData={correlations.drinks.without}
-                />
-              )}
-
-              {correlations.weed && (
-                <CorrelationBlock
-                  title="Spliffs"
-                  withLabel="With spliffs"
-                  withData={correlations.weed.with}
-                  withoutLabel="Without"
-                  withoutData={correlations.weed.without}
-                />
+              {Object.entries(correlations).map(([id, data]) =>
+                data ? (
+                  <CorrelationBlock
+                    key={id}
+                    title={data.label}
+                    withLabel={`With ${data.label.toLowerCase()}`}
+                    withData={data.with}
+                    withoutLabel={`Without`}
+                    withoutData={data.without}
+                  />
+                ) : null
               )}
             </div>
           )}

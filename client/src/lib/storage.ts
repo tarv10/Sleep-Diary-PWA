@@ -1,15 +1,33 @@
-import type { SleepEntry, AppSettings } from "@shared/schema";
-import { defaultSettings } from "@shared/schema";
+import type { SleepEntry, AppSettings, FactorDefinition } from "@shared/schema";
+import { defaultSettings, defaultFactors } from "@shared/schema";
 import { calculateMetrics } from "./sleepUtils";
 
 const ENTRIES_KEY = "sleep_entries";
 const SETTINGS_KEY = "sleep_settings";
 const UNLOCKED_KEY = "sleep_unlocked";
 
+export function getFactors(): FactorDefinition[] {
+  return getSettings().factors;
+}
+
+export function migrateEntry(raw: any): SleepEntry {
+  if (!raw.factorValues) {
+    const fv: Record<string, number | boolean> = {};
+    if (typeof raw.drinks === "number") fv["alc_drinks"] = raw.drinks;
+    raw.factorValues = fv;
+  }
+  if (raw.drinks === undefined) raw.drinks = 0;
+  if (raw.weed === undefined) raw.weed = false;
+  if (raw.insights === undefined) raw.insights = false;
+  return raw as SleepEntry;
+}
+
 export function getAllEntries(): SleepEntry[] {
   try {
     const raw = localStorage.getItem(ENTRIES_KEY);
-    return raw ? JSON.parse(raw) : [];
+    if (!raw) return [];
+    const arr = JSON.parse(raw) as any[];
+    return arr.map(migrateEntry);
   } catch {
     return [];
   }
@@ -39,7 +57,13 @@ export function deleteEntry(id: string): void {
 export function getSettings(): AppSettings {
   try {
     const raw = localStorage.getItem(SETTINGS_KEY);
-    return raw ? { ...defaultSettings, ...JSON.parse(raw) } : defaultSettings;
+    if (!raw) return defaultSettings;
+    const parsed = JSON.parse(raw);
+    return {
+      ...defaultSettings,
+      ...parsed,
+      factors: parsed.factors || defaultFactors,
+    };
   } catch {
     return defaultSettings;
   }
@@ -65,9 +89,20 @@ export function generateId(): string {
   return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
 }
 
-export function exportToCSV(
-  entries: SleepEntry[]
-): string {
+export function getFactorValue(
+  entry: SleepEntry,
+  factorId: string
+): number | boolean {
+  if (entry.factorValues && factorId in entry.factorValues) {
+    return entry.factorValues[factorId];
+  }
+  if (factorId === "alc_drinks") return entry.drinks;
+  return false;
+}
+
+export function exportToCSV(entries: SleepEntry[]): string {
+  const factors = getFactors();
+
   const headers = [
     "Date",
     "Bedtime",
@@ -76,9 +111,7 @@ export function exportToCSV(
     "Night Wakings",
     "Nap Start",
     "Nap End",
-    "Drinks",
-    "Spliffs",
-    "Other",
+    ...factors.map((f) => f.label),
     "Feeling",
     "Notes",
     "Time in Bed (min)",
@@ -94,6 +127,13 @@ export function exportToCSV(
     const wakingsStr = e.nightWakings
       .map((w) => `${w.start}-${w.end}`)
       .join("; ");
+
+    const factorCols = factors.map((f) => {
+      const val = getFactorValue(e, f.id);
+      if (f.type === "boolean") return val ? "Yes" : "No";
+      return val;
+    });
+
     return [
       e.date,
       e.bedtime,
@@ -102,9 +142,7 @@ export function exportToCSV(
       `"${wakingsStr}"`,
       e.napStart || "",
       e.napEnd || "",
-      e.drinks,
-      e.weed ? "Yes" : "No",
-      e.insights ? "Yes" : "No",
+      ...factorCols,
       e.feeling,
       `"${(e.notes || "").replace(/"/g, '""')}"`,
       m.timeInBed,
@@ -157,6 +195,11 @@ export function seedIfEmpty(): void {
         ? [{ id: generateId(), start: "03:15", end: "03:35" }]
         : [];
 
+    const factorValues: Record<string, number | boolean> = {
+      alc_drinks: p.drinks,
+      screens_off: i % 2 === 0,
+    };
+
     sampleEntries.push({
       id: generateId(),
       date: dateStr,
@@ -169,6 +212,7 @@ export function seedIfEmpty(): void {
       drinks: p.drinks,
       weed: p.weed,
       insights: i % 4 === 0,
+      factorValues,
       feeling: p.feeling,
       notes: p.notes,
       createdAt: new Date().toISOString(),
