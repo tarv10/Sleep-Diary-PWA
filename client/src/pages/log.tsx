@@ -253,10 +253,14 @@ export default function LogPage({ initialDate }: LogPageProps) {
 
   const displayDate = parseDate(date);
   const displayDateStr = displayDate.toLocaleDateString("en-US", {
-    weekday: "short",
+    weekday: "long",
     month: "short",
     day: "numeric",
   });
+
+  const prevDay = new Date(displayDate);
+  prevDay.setDate(prevDay.getDate() - 1);
+  const prevDayName = prevDay.toLocaleDateString("en-US", { weekday: "long" });
 
   return (
     <div className="flex flex-col min-h-full px-5 pb-24" style={{ paddingTop: "max(1.5rem, calc(env(safe-area-inset-top) + 0.75rem))" }}>
@@ -404,7 +408,7 @@ export default function LogPage({ initialDate }: LogPageProps) {
       {/* ── Nap (Disruption Zone) ── */}
       <div className="mb-2 mt-4">
         <div className="flex items-center justify-between">
-          <ZoneLabel color="disruption" className="mb-0">Nap</ZoneLabel>
+          <ZoneLabel color="disruption" className="mb-0">Naps on {prevDayName}</ZoneLabel>
           <Button
             size="icon"
             variant="ghost"
@@ -646,7 +650,7 @@ function ZoneLabel({
   color,
   className,
 }: {
-  children: string;
+  children: React.ReactNode;
   color: "sleep" | "disruption" | "substance" | "reflection";
   className?: string;
 }) {
