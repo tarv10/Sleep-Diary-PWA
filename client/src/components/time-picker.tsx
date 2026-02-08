@@ -735,7 +735,7 @@ function InlineDrum({ type, totalMinutes, currentValue, items, onTouchStart, onW
               style={
                 color && distFromCenter < 0.5
                   ? {
-                      color: settled ? `color-mix(in srgb, ${color} 35%, white)` : undefined,
+                      color: settled ? `color-mix(in srgb, ${color} 65%, white)` : undefined,
                       transition: settled ? "color 1.8s ease-in" : "color 0.15s ease-out",
                     }
                   : undefined
