@@ -408,7 +408,8 @@ export function InlineTimePicker({ value, onChange, fadeBg = "#0D1117", testId, 
   const hourAlignRef = useRef(hourAlignOffset);
   const hourAlignFrame = useRef<number>(0);
   const isDragging = useRef<"hour" | "minute" | null>(null);
-  const [settled, setSettled] = useState(true);
+  const userTouched = useRef(false);
+  const [settled, setSettled] = useState(false);
   const dragStartY = useRef(0);
   const dragStartMinutes = useRef(0);
   const lastY = useRef(0);
@@ -500,7 +501,7 @@ export function InlineTimePicker({ value, onChange, fadeBg = "#0D1117", testId, 
         setTotalMinutes(target);
         emitChange(target);
         startHourAlign(target);
-        setSettled(true);
+        if (userTouched.current) setSettled(true);
         return;
       }
       totalMinutesRef.current = current;
@@ -519,6 +520,7 @@ export function InlineTimePicker({ value, onChange, fadeBg = "#0D1117", testId, 
     lastY.current = e.touches[0].clientY;
     lastTime.current = Date.now();
     velocity.current = 0;
+    userTouched.current = true;
     setSettled(false);
   }, []);
 
@@ -576,6 +578,7 @@ export function InlineTimePicker({ value, onChange, fadeBg = "#0D1117", testId, 
   const handleWheel = useCallback((drum: "hour" | "minute") => (e: React.WheelEvent) => {
     cancelAnimationFrame(animFrame.current);
     cancelAnimationFrame(hourAlignFrame.current);
+    userTouched.current = true;
     setSettled(false);
     const scale = drum === "hour" ? 30 / INLINE_ITEM_HEIGHT : 7.5 / INLINE_ITEM_HEIGHT;
     const delta = e.deltaY * scale;
