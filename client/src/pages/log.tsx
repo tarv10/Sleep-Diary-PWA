@@ -333,7 +333,7 @@ export default function LogPage({ initialDate }: LogPageProps) {
 
       {/* ── The Night (Sleep Zone) ── */}
       <div className="mb-2 rounded-md bg-zone-sleep-bg/60 px-3 pb-3 pt-4 -mx-1">
-        <div className="flex justify-between gap-3">
+        <div className="flex justify-between gap-5">
           <div className="flex flex-col items-center flex-1" data-testid="input-bedtime">
             <Moon className="w-4 h-4 mb-1.5" strokeWidth={1.5} style={{ color: "hsl(120, 35%, 48%)" }} />
             <span className="text-[10px] uppercase tracking-[0.15em] mb-1" style={{ color: "hsl(120, 35%, 48%)" }}>In bed</span>
