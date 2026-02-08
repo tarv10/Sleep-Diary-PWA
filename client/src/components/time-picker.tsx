@@ -618,8 +618,15 @@ export function InlineTimePicker({ value, onChange, fadeBg = "#0D1117", testId, 
 
       <div className="relative select-none" style={{ height: INLINE_DRUM_HEIGHT, width: 8 }}>
         <div
-          className="absolute inset-x-0 flex items-center justify-center text-lg font-light leading-none text-foreground/25"
-          style={{ top: INLINE_CENTER, height: INLINE_ITEM_HEIGHT }}
+          className="absolute inset-x-0 flex items-center justify-center text-lg font-light leading-none"
+          style={{
+            top: INLINE_CENTER,
+            height: INLINE_ITEM_HEIGHT,
+            color: color && settled
+              ? `color-mix(in srgb, ${color} ${colorMix}%, white)`
+              : "rgba(255,255,255,0.25)",
+            transition: settled ? "color 1.8s ease-in" : "color 0.15s ease-out",
+          }}
         >
           :
         </div>
