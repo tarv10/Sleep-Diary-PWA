@@ -344,7 +344,7 @@ export default function LogPage({ initialDate }: LogPageProps) {
           </div>
           <div className="flex flex-col items-center flex-1" data-testid="input-sleep-time">
             <svg className="w-4 h-4 mb-1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" style={{ color: "hsl(200, 75%, 60%)" }}>
-              <path d="M12 2c-2 4-5 6-5 10 0 2.5 1.5 4.5 3.5 5.5C11.5 18 12 17 12 16c0 1 .5 2 1.5 2.5C15.5 17.5 17 15.5 17 13c0-4-3-6-5-11z" />
+              <path d="M12 1c-3 5-6 8-6 14 0 3 2.5 5.5 6 7 3.5-1.5 6-4 6-7 0-6-3-9-6-14z" />
             </svg>
             <span className="text-[10px] uppercase tracking-[0.15em] mb-1" style={{ color: "hsl(200, 75%, 60%)" }}>Asleep</span>
             <InlineTimePicker value={sleepTime} onChange={setSleepTime} fadeBg="#0f1219" testId="input-sleep-time-picker" color="hsl(200, 75%, 60%)" colorMix={70} />
