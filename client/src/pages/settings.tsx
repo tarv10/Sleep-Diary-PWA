@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Download, Trash2, Lock, Unlock, Clock, Plus, X, GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -260,39 +260,37 @@ export default function SettingsPage() {
       </Section>
 
       <Section label="Factors">
-        <div className="py-2 space-y-0">
-          {settings.factors.map((factor, idx) => (
-            <FactorRow
-              key={factor.id}
-              factor={factor}
-              isFirst={idx === 0}
-              onUpdate={(updated) => {
-                const factors = settings.factors.map((f) =>
-                  f.id === factor.id ? updated : f
-                );
-                const s = { ...settings, factors };
-                saveSettings(s);
-                setSettingsState(s);
-              }}
-              onDelete={() => {
-                const factors = settings.factors.filter((f) => f.id !== factor.id);
-                const s = { ...settings, factors };
-                saveSettings(s);
-                setSettingsState(s);
-                toast({ title: `Removed "${factor.label}"` });
-              }}
-            />
-          ))}
-          <AddFactorButton
-            onAdd={(factor) => {
-              const factors = [...settings.factors, factor];
-              const s = { ...settings, factors };
-              saveSettings(s);
-              setSettingsState(s);
-              toast({ title: `Added "${factor.label}"` });
-            }}
-          />
-        </div>
+        <FactorList
+          factors={settings.factors}
+          onReorder={(factors) => {
+            const s = { ...settings, factors };
+            saveSettings(s);
+            setSettingsState(s);
+          }}
+          onUpdate={(id, updated) => {
+            const factors = settings.factors.map((f) =>
+              f.id === id ? updated : f
+            );
+            const s = { ...settings, factors };
+            saveSettings(s);
+            setSettingsState(s);
+          }}
+          onDelete={(id) => {
+            const factor = settings.factors.find((f) => f.id === id);
+            const factors = settings.factors.filter((f) => f.id !== id);
+            const s = { ...settings, factors };
+            saveSettings(s);
+            setSettingsState(s);
+            if (factor) toast({ title: `Removed "${factor.label}"` });
+          }}
+          onAdd={(factor) => {
+            const factors = [...settings.factors, factor];
+            const s = { ...settings, factors };
+            saveSettings(s);
+            setSettingsState(s);
+            toast({ title: `Added "${factor.label}"` });
+          }}
+        />
       </Section>
 
       <Section label="Export">
@@ -403,16 +401,141 @@ function Section({
   );
 }
 
+function FactorList({
+  factors,
+  onReorder,
+  onUpdate,
+  onDelete,
+  onAdd,
+}: {
+  factors: FactorDefinition[];
+  onReorder: (factors: FactorDefinition[]) => void;
+  onUpdate: (id: string, f: FactorDefinition) => void;
+  onDelete: (id: string) => void;
+  onAdd: (f: FactorDefinition) => void;
+}) {
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [overIdx, setOverIdx] = useState<number | null>(null);
+  const dragStartY = useRef(0);
+  const rowRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const handleTouchStart = useCallback((idx: number, e: React.TouchEvent) => {
+    e.preventDefault();
+    setDragIdx(idx);
+    setOverIdx(idx);
+    dragStartY.current = e.touches[0].clientY;
+  }, []);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (dragIdx === null) return;
+    const y = e.touches[0].clientY;
+    for (let i = 0; i < rowRefs.current.length; i++) {
+      const el = rowRefs.current[i];
+      if (!el) continue;
+      const rect = el.getBoundingClientRect();
+      if (y >= rect.top && y <= rect.bottom) {
+        setOverIdx(i);
+        break;
+      }
+    }
+  }, [dragIdx]);
+
+  const handleTouchEnd = useCallback(() => {
+    if (dragIdx !== null && overIdx !== null && dragIdx !== overIdx) {
+      const newFactors = [...factors];
+      const [moved] = newFactors.splice(dragIdx, 1);
+      newFactors.splice(overIdx, 0, moved);
+      onReorder(newFactors);
+    }
+    setDragIdx(null);
+    setOverIdx(null);
+  }, [dragIdx, overIdx, factors, onReorder]);
+
+  const handleDragStart = useCallback((idx: number) => {
+    setDragIdx(idx);
+    setOverIdx(idx);
+  }, []);
+
+  const handleDragOver = useCallback((idx: number, e: React.DragEvent) => {
+    e.preventDefault();
+    setOverIdx(idx);
+  }, []);
+
+  const handleDrop = useCallback(() => {
+    if (dragIdx !== null && overIdx !== null && dragIdx !== overIdx) {
+      const newFactors = [...factors];
+      const [moved] = newFactors.splice(dragIdx, 1);
+      newFactors.splice(overIdx, 0, moved);
+      onReorder(newFactors);
+    }
+    setDragIdx(null);
+    setOverIdx(null);
+  }, [dragIdx, overIdx, factors, onReorder]);
+
+  const handleDragEnd = useCallback(() => {
+    setDragIdx(null);
+    setOverIdx(null);
+  }, []);
+
+  const displayOrder = (() => {
+    if (dragIdx === null || overIdx === null || dragIdx === overIdx) return factors;
+    const reordered = [...factors];
+    const [moved] = reordered.splice(dragIdx, 1);
+    reordered.splice(overIdx, 0, moved);
+    return reordered;
+  })();
+
+  return (
+    <div className="py-2 space-y-0" ref={containerRef}>
+      {displayOrder.map((factor, idx) => {
+        const originalIdx = factors.indexOf(factor);
+        const isDragging = dragIdx !== null && factors[dragIdx]?.id === factor.id;
+        return (
+          <div
+            key={factor.id}
+            ref={(el) => { rowRefs.current[idx] = el; }}
+            draggable
+            onDragStart={() => handleDragStart(originalIdx)}
+            onDragOver={(e) => handleDragOver(idx, e)}
+            onDrop={handleDrop}
+            onDragEnd={handleDragEnd}
+            onTouchStart={(e) => handleTouchStart(originalIdx, e)}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            className={cn(
+              "transition-opacity duration-150",
+              isDragging && "opacity-50"
+            )}
+            data-testid={`draggable-factor-${factor.id}`}
+          >
+            <FactorRow
+              factor={factor}
+              isFirst={idx === 0}
+              onUpdate={(updated) => onUpdate(factor.id, updated)}
+              onDelete={() => onDelete(factor.id)}
+              showDragHandle
+            />
+          </div>
+        );
+      })}
+      <AddFactorButton onAdd={onAdd} />
+    </div>
+  );
+}
+
 function FactorRow({
   factor,
   isFirst,
   onUpdate,
   onDelete,
+  showDragHandle,
 }: {
   factor: FactorDefinition;
   isFirst: boolean;
   onUpdate: (f: FactorDefinition) => void;
   onDelete: () => void;
+  showDragHandle?: boolean;
 }) {
   const [editing, setEditing] = useState(false);
   const [label, setLabel] = useState(factor.label);
@@ -501,6 +624,12 @@ function FactorRow({
         !isFirst && "border-t border-border/8"
       )}
     >
+      {showDragHandle && (
+        <GripVertical
+          className="w-4 h-4 text-muted-foreground/25 flex-shrink-0 mr-2 cursor-grab active:cursor-grabbing touch-none"
+          data-testid={`drag-handle-${factor.id}`}
+        />
+      )}
       <div className="flex items-center gap-2 min-w-0 flex-1">
         <span className="text-sm text-foreground/80 truncate">{factor.label}</span>
         <span className="text-[10px] text-muted-foreground/30">
