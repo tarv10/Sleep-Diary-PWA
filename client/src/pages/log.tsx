@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import { ChevronLeft, ChevronRight, Plus, X, Trash2, Star, Check, Moon, Flame, Sunrise, Save } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, X, Trash2, Star, Check, Moon, Sunrise, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
@@ -343,7 +343,9 @@ export default function LogPage({ initialDate }: LogPageProps) {
             <div style={{ height: 1, opacity: 0.25, background: "linear-gradient(to right, hsl(120, 35%, 48%), hsl(200, 75%, 60%))" }} />
           </div>
           <div className="flex flex-col items-center flex-1" data-testid="input-sleep-time">
-            <Flame className="w-4 h-4 mb-1.5" strokeWidth={1.5} style={{ color: "hsl(200, 75%, 60%)" }} />
+            <svg className="w-4 h-4 mb-1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" style={{ color: "hsl(200, 75%, 60%)" }}>
+              <path d="M12 2c0 4-4 6-4 10a4 4 0 0 0 8 0c0-4-4-6-4-10z" />
+            </svg>
             <span className="text-[10px] uppercase tracking-[0.15em] mb-1" style={{ color: "hsl(200, 75%, 60%)" }}>Asleep</span>
             <InlineTimePicker value={sleepTime} onChange={setSleepTime} fadeBg="#0f1219" testId="input-sleep-time-picker" color="hsl(200, 75%, 60%)" colorMix={70} />
           </div>
