@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import { ChevronLeft, ChevronRight, Plus, X, Trash2, Star, Check, Moon, CloudMoon, Sunrise, Save } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, X, Trash2, Star, Check, BedDouble, Sunrise, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
@@ -335,7 +335,7 @@ export default function LogPage({ initialDate }: LogPageProps) {
       <div className="mb-2 rounded-md bg-zone-sleep-bg/60 px-3 pb-3 pt-4 -mx-1">
         <div className="flex items-start">
           <div className="flex flex-col items-center flex-1" data-testid="input-bedtime">
-            <Moon className="w-4 h-4 mb-1.5" strokeWidth={1.5} style={{ color: "hsl(120, 35%, 48%)" }} />
+            <BedDouble className="w-4 h-4 mb-1.5" strokeWidth={1.5} style={{ color: "hsl(120, 35%, 48%)" }} />
             <span className="text-[10px] uppercase tracking-[0.15em] mb-1" style={{ color: "hsl(120, 35%, 48%)" }}>In bed</span>
             <InlineTimePicker value={bedtime} onChange={setBedtime} fadeBg="#0f1219" testId="input-bedtime-picker" color="hsl(120, 35%, 48%)" />
           </div>
@@ -343,7 +343,10 @@ export default function LogPage({ initialDate }: LogPageProps) {
             <div style={{ height: 1, opacity: 0.25, background: "linear-gradient(to right, hsl(120, 35%, 48%), hsl(200, 75%, 60%))" }} />
           </div>
           <div className="flex flex-col items-center flex-1" data-testid="input-sleep-time">
-            <CloudMoon className="w-4 h-4 mb-1.5" strokeWidth={1.5} style={{ color: "hsl(200, 75%, 60%)" }} />
+            <svg className="w-4 h-4 mb-1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" style={{ color: "hsl(200, 75%, 60%)" }}>
+              <path d="M4 12h8l-8 8h8" />
+              <path d="M14 4h6l-6 6h6" />
+            </svg>
             <span className="text-[10px] uppercase tracking-[0.15em] mb-1" style={{ color: "hsl(200, 75%, 60%)" }}>Asleep</span>
             <InlineTimePicker value={sleepTime} onChange={setSleepTime} fadeBg="#0f1219" testId="input-sleep-time-picker" color="hsl(200, 75%, 60%)" colorMix={70} />
           </div>
