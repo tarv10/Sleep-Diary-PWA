@@ -651,10 +651,10 @@ function ZoneLabel({
   className?: string;
 }) {
   const colorMap = {
-    sleep: "text-zone-sleep-muted",
-    disruption: "text-zone-disruption-muted",
-    substance: "text-zone-substance-muted",
-    reflection: "text-zone-reflection-muted",
+    sleep: "text-foreground",
+    disruption: "text-foreground",
+    substance: "text-foreground",
+    reflection: "text-foreground",
   };
 
   return (
