@@ -16,7 +16,7 @@ export const factorDefinitionSchema = z.object({
 export type FactorDefinition = z.infer<typeof factorDefinitionSchema>;
 
 export const defaultFactors: FactorDefinition[] = [
-  { id: "alc_drinks", label: "Alc drinks", type: "integer", max: 15 },
+  { id: "alc_drinks", label: "Alcohol", type: "integer", max: 15 },
   { id: "coffee", label: "Coffee", type: "integer", max: 10 },
   { id: "screens_off", label: "Screens off 1hr", type: "boolean" },
 ];
