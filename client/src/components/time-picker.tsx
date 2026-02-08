@@ -395,9 +395,10 @@ interface InlineTimePickerProps {
   onChange: (value: string) => void;
   fadeBg?: string;
   testId?: string;
+  color?: string;
 }
 
-export function InlineTimePicker({ value, onChange, fadeBg = "#0D1117", testId }: InlineTimePickerProps) {
+export function InlineTimePicker({ value, onChange, fadeBg = "#0D1117", testId, color }: InlineTimePickerProps) {
   const [totalMinutes, setTotalMinutes] = useState(() => parseTime(value));
   const totalMinutesRef = useRef(totalMinutes);
   const [hourAlignOffset, setHourAlignOffset] = useState(() => {
@@ -602,12 +603,13 @@ export function InlineTimePicker({ value, onChange, fadeBg = "#0D1117", testId }
         onWheel={handleWheel("hour")}
         fadeTop={fadeTop}
         fadeBottom={fadeBottom}
+        color={color}
       />
 
       <div className="relative select-none" style={{ height: INLINE_DRUM_HEIGHT, width: 8 }}>
         <div
-          className="absolute inset-x-0 flex items-end justify-center pb-[6px] text-lg font-light text-foreground/25 leading-none"
-          style={{ top: INLINE_CENTER, height: INLINE_ITEM_HEIGHT }}
+          className="absolute inset-x-0 flex items-end justify-center pb-[6px] text-lg font-light leading-none"
+          style={{ top: INLINE_CENTER, height: INLINE_ITEM_HEIGHT, color: color || undefined, opacity: 0.25 }}
         >
           :
         </div>
@@ -622,6 +624,7 @@ export function InlineTimePicker({ value, onChange, fadeBg = "#0D1117", testId }
         onWheel={handleWheel("minute")}
         fadeTop={fadeTop}
         fadeBottom={fadeBottom}
+        color={color}
       />
     </div>
   );
@@ -636,9 +639,10 @@ interface InlineDrumProps {
   onWheel: (e: React.WheelEvent) => void;
   fadeTop: string;
   fadeBottom: string;
+  color?: string;
 }
 
-function InlineDrum({ type, totalMinutes, currentValue, items, onTouchStart, onWheel, fadeTop, fadeBottom }: InlineDrumProps) {
+function InlineDrum({ type, totalMinutes, currentValue, items, onTouchStart, onWheel, fadeTop, fadeBottom, color }: InlineDrumProps) {
   const count = items.length;
   const intIndex = Math.floor(currentValue);
   const fraction = currentValue - intIndex;
@@ -713,10 +717,14 @@ function InlineDrum({ type, totalMinutes, currentValue, items, onTouchStart, onW
               willChange: "transform, opacity",
             }}
           >
-            <span className={cn(
-              "tabular-nums text-foreground leading-none",
-              isHour ? "text-2xl font-semibold" : "text-lg font-light"
-            )}>
+            <span
+              className={cn(
+                "tabular-nums leading-none",
+                !color && "text-foreground",
+                isHour ? "text-2xl font-semibold" : "text-lg font-light"
+              )}
+              style={color ? { color } : undefined}
+            >
               {items[itemIndex].toString().padStart(2, "0")}
             </span>
           </div>

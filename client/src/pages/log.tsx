@@ -335,19 +335,19 @@ export default function LogPage({ initialDate }: LogPageProps) {
       <div className="mb-2 rounded-md bg-zone-sleep-bg/60 px-3 pb-3 pt-4 -mx-1">
         <div className="flex justify-between gap-3">
           <div className="flex flex-col items-center flex-1" data-testid="input-bedtime">
-            <Moon className="w-4 h-4 mb-1.5 text-zone-disruption-muted" strokeWidth={1.5} />
-            <span className="text-[10px] text-zone-disruption-muted uppercase tracking-[0.15em] mb-1">In bed</span>
-            <InlineTimePicker value={bedtime} onChange={setBedtime} fadeBg="#0f1219" testId="input-bedtime-picker" />
+            <Moon className="w-4 h-4 mb-1.5" strokeWidth={1.5} style={{ color: "hsl(120, 35%, 48%)" }} />
+            <span className="text-[10px] uppercase tracking-[0.15em] mb-1" style={{ color: "hsl(120, 35%, 48%)" }}>In bed</span>
+            <InlineTimePicker value={bedtime} onChange={setBedtime} fadeBg="#0f1219" testId="input-bedtime-picker" color="hsl(120, 35%, 48%)" />
           </div>
           <div className="flex flex-col items-center flex-1" data-testid="input-sleep-time">
             <CloudMoon className="w-4 h-4 mb-1.5" strokeWidth={1.5} style={{ color: "hsl(200, 75%, 60%)" }} />
             <span className="text-[10px] uppercase tracking-[0.15em] mb-1" style={{ color: "hsl(200, 75%, 60%)" }}>Asleep</span>
-            <InlineTimePicker value={sleepTime} onChange={setSleepTime} fadeBg="#0f1219" testId="input-sleep-time-picker" />
+            <InlineTimePicker value={sleepTime} onChange={setSleepTime} fadeBg="#0f1219" testId="input-sleep-time-picker" color="hsl(200, 75%, 60%)" />
           </div>
           <div className="flex flex-col items-center flex-1" data-testid="input-wake-time">
             <Sunrise className="w-4 h-4 mb-1.5" strokeWidth={1.5} style={{ color: "hsl(45, 70%, 55%)" }} />
             <span className="text-[10px] uppercase tracking-[0.15em] mb-1" style={{ color: "hsl(45, 70%, 55%)" }}>Awake</span>
-            <InlineTimePicker value={wakeTime} onChange={setWakeTime} fadeBg="#0f1219" testId="input-wake-time-picker" />
+            <InlineTimePicker value={wakeTime} onChange={setWakeTime} fadeBg="#0f1219" testId="input-wake-time-picker" color="hsl(45, 70%, 55%)" />
           </div>
         </div>
       </div>
