@@ -309,8 +309,8 @@ function Drum({ type, totalMinutes, currentValue, items, onTouchStart, onWheel }
     >
       <div className="absolute inset-0 pointer-events-none z-0 rounded-lg" style={{ background: "linear-gradient(to bottom, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.07) 50%, rgba(255,255,255,0.04) 100%)" }} />
 
-      <div className="absolute left-0 top-0 bottom-0 pointer-events-none z-10" style={{ width: 1, background: "linear-gradient(to bottom, transparent 10%, rgba(255,255,255,0.1) 40%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.1) 60%, transparent 90%)" }} />
-      <div className="absolute right-0 top-0 bottom-0 pointer-events-none z-10" style={{ width: 1, background: "linear-gradient(to bottom, transparent 10%, rgba(255,255,255,0.1) 40%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.1) 60%, transparent 90%)" }} />
+      <div className="absolute left-0 top-0 bottom-0 pointer-events-none z-10" style={{ width: 1, background: "linear-gradient(to bottom, transparent 10%, rgba(255,255,255,0.12) 40%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.12) 60%, transparent 90%)" }} />
+      <div className="absolute right-0 top-0 bottom-0 pointer-events-none z-10" style={{ width: 1, background: "linear-gradient(to bottom, transparent 10%, rgba(255,255,255,0.03) 40%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0.03) 60%, transparent 90%)" }} />
 
       <div
         className="absolute inset-x-0 top-0 pointer-events-none z-20"
@@ -677,8 +677,8 @@ function InlineDrum({ type, totalMinutes, currentValue, items, onTouchStart, onW
     >
       <div className="absolute inset-0 pointer-events-none z-0 rounded-md" style={{ background: "linear-gradient(to bottom, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.03) 100%)" }} />
 
-      <div className="absolute left-0 top-0 bottom-0 pointer-events-none z-10" style={{ width: 1, background: "linear-gradient(to bottom, transparent 10%, rgba(255,255,255,0.08) 40%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.08) 60%, transparent 90%)" }} />
-      <div className="absolute right-0 top-0 bottom-0 pointer-events-none z-10" style={{ width: 1, background: "linear-gradient(to bottom, transparent 10%, rgba(255,255,255,0.08) 40%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.08) 60%, transparent 90%)" }} />
+      <div className="absolute left-0 top-0 bottom-0 pointer-events-none z-10" style={{ width: 1, background: "linear-gradient(to bottom, transparent 10%, rgba(255,255,255,0.10) 40%, rgba(255,255,255,0.13) 50%, rgba(255,255,255,0.10) 60%, transparent 90%)" }} />
+      <div className="absolute right-0 top-0 bottom-0 pointer-events-none z-10" style={{ width: 1, background: "linear-gradient(to bottom, transparent 10%, rgba(255,255,255,0.03) 40%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0.03) 60%, transparent 90%)" }} />
 
       <div className="absolute inset-x-0 top-0 pointer-events-none z-20" style={{ height: INLINE_CENTER, background: fadeTop }} />
       <div className="absolute inset-x-0 bottom-0 pointer-events-none z-20" style={{ height: INLINE_CENTER, background: fadeBottom }} />
