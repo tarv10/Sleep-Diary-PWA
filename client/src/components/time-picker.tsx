@@ -54,6 +54,12 @@ interface TimePickerProps {
 export default function TimePicker({ value, onChange, onClose, label }: TimePickerProps) {
   const [totalMinutes, setTotalMinutes] = useState(() => parseTime(value));
   const totalMinutesRef = useRef(totalMinutes);
+  const [hourAlignOffset, setHourAlignOffset] = useState(() => {
+    const n = normalizeMinutes(parseTime(value));
+    return -(n % 60) / 60;
+  });
+  const hourAlignRef = useRef(hourAlignOffset);
+  const hourAlignFrame = useRef<number>(0);
   const isDragging = useRef<"hour" | "minute" | null>(null);
   const dragStartY = useRef(0);
   const dragStartMinutes = useRef(0);
@@ -74,8 +80,32 @@ export default function TimePicker({ value, onChange, onClose, label }: TimePick
   useEffect(() => {
     return () => {
       cancelAnimationFrame(animFrame.current);
+      cancelAnimationFrame(hourAlignFrame.current);
     };
   }, []);
+
+  const animateHourAlign = useCallback((fromOffset: number, targetOffset: number) => {
+    let current = fromOffset;
+    const animate = () => {
+      current += (targetOffset - current) * 0.18;
+      if (Math.abs(targetOffset - current) < 0.005) {
+        hourAlignRef.current = targetOffset;
+        setHourAlignOffset(targetOffset);
+        return;
+      }
+      hourAlignRef.current = current;
+      setHourAlignOffset(current);
+      hourAlignFrame.current = requestAnimationFrame(animate);
+    };
+    animate();
+  }, []);
+
+  const startHourAlign = useCallback((snappedMinutes: number) => {
+    const n = normalizeMinutes(snappedMinutes);
+    const minuteFrac = (n % 60) / 60;
+    const target = -minuteFrac;
+    animateHourAlign(hourAlignRef.current, target);
+  }, [animateHourAlign]);
 
   const snapAndAnimate = useCallback((fromMinutes: number, vel: number, drum: "hour" | "minute") => {
     const scale = drum === "hour" ? 30 : 7.5;
@@ -108,6 +138,7 @@ export default function TimePicker({ value, onChange, onClose, label }: TimePick
       if (Math.abs(target - current) < 0.5) {
         totalMinutesRef.current = target;
         setTotalMinutes(target);
+        startHourAlign(target);
         return;
       }
       totalMinutesRef.current = current;
@@ -115,10 +146,13 @@ export default function TimePicker({ value, onChange, onClose, label }: TimePick
       animFrame.current = requestAnimationFrame(animate);
     };
     animate();
-  }, []);
+  }, [startHourAlign]);
 
   const handleTouchStart = useCallback((drum: "hour" | "minute") => (e: React.TouchEvent) => {
     cancelAnimationFrame(animFrame.current);
+    cancelAnimationFrame(hourAlignFrame.current);
+    hourAlignRef.current = 0;
+    setHourAlignOffset(0);
     isDragging.current = drum;
     dragStartY.current = e.touches[0].clientY;
     dragStartMinutes.current = totalMinutesRef.current;
@@ -167,6 +201,9 @@ export default function TimePicker({ value, onChange, onClose, label }: TimePick
   const handleWheel = useCallback((drum: "hour" | "minute") => (e: React.WheelEvent) => {
     e.preventDefault();
     cancelAnimationFrame(animFrame.current);
+    cancelAnimationFrame(hourAlignFrame.current);
+    hourAlignRef.current = 0;
+    setHourAlignOffset(0);
     const scale = drum === "hour" ? 30 / ITEM_HEIGHT : 7.5 / ITEM_HEIGHT;
     const delta = e.deltaY * scale;
     const newTotal = totalMinutesRef.current + delta;
@@ -176,6 +213,7 @@ export default function TimePicker({ value, onChange, onClose, label }: TimePick
 
   const handleConfirm = () => {
     cancelAnimationFrame(animFrame.current);
+    cancelAnimationFrame(hourAlignFrame.current);
     const snapped = Math.round(totalMinutes / 15) * 15;
     onChange(formatTime(snapped));
     onClose();
@@ -185,7 +223,7 @@ export default function TimePicker({ value, onChange, onClose, label }: TimePick
   const hour24 = Math.floor(norm / 60);
   const currentHour12 = to12Hour(hour24);
   const hour12Index = HOURS_12.indexOf(currentHour12);
-  const currentHourFrac = hour12Index;
+  const currentHourFrac = hour12Index + (norm % 60) / 60 + hourAlignOffset;
   const currentMinuteQ = (norm % 60) / 15;
   const ampm = getAmPm(hour24);
 
@@ -430,6 +468,12 @@ interface InlineTimePickerProps {
 export function InlineTimePicker({ value, onChange, fadeBg = "#0D1117", testId }: InlineTimePickerProps) {
   const [totalMinutes, setTotalMinutes] = useState(() => parseTime(value));
   const totalMinutesRef = useRef(totalMinutes);
+  const [hourAlignOffset, setHourAlignOffset] = useState(() => {
+    const n = normalizeMinutes(parseTime(value));
+    return -(n % 60) / 60;
+  });
+  const hourAlignRef = useRef(hourAlignOffset);
+  const hourAlignFrame = useRef<number>(0);
   const isDragging = useRef<"hour" | "minute" | null>(null);
   const dragStartY = useRef(0);
   const dragStartMinutes = useRef(0);
@@ -449,16 +493,46 @@ export function InlineTimePicker({ value, onChange, fadeBg = "#0D1117", testId }
     if (Math.abs(normalizeMinutes(totalMinutesRef.current) - normalizeMinutes(incoming)) > 1) {
       setTotalMinutes(incoming);
       totalMinutesRef.current = incoming;
+      const n = normalizeMinutes(incoming);
+      const offset = -(n % 60) / 60;
+      hourAlignRef.current = offset;
+      setHourAlignOffset(offset);
     }
   }, [value]);
 
   useEffect(() => {
-    return () => { cancelAnimationFrame(animFrame.current); };
+    return () => {
+      cancelAnimationFrame(animFrame.current);
+      cancelAnimationFrame(hourAlignFrame.current);
+    };
   }, []);
 
   const emitChange = useCallback((minutes: number) => {
     onChangeRef.current(formatTime(minutes));
   }, []);
+
+  const animateHourAlign = useCallback((fromOffset: number, targetOffset: number) => {
+    let current = fromOffset;
+    const animate = () => {
+      current += (targetOffset - current) * 0.18;
+      if (Math.abs(targetOffset - current) < 0.005) {
+        hourAlignRef.current = targetOffset;
+        setHourAlignOffset(targetOffset);
+        return;
+      }
+      hourAlignRef.current = current;
+      setHourAlignOffset(current);
+      hourAlignFrame.current = requestAnimationFrame(animate);
+    };
+    animate();
+  }, []);
+
+  const startHourAlign = useCallback((snappedMinutes: number) => {
+    const n = normalizeMinutes(snappedMinutes);
+    const minuteFrac = (n % 60) / 60;
+    const target = -minuteFrac;
+    animateHourAlign(hourAlignRef.current, target);
+  }, [animateHourAlign]);
 
   const snapAndAnimate = useCallback((fromMinutes: number, vel: number, drum: "hour" | "minute") => {
     const scale = drum === "hour" ? 30 : 7.5;
@@ -491,6 +565,7 @@ export function InlineTimePicker({ value, onChange, fadeBg = "#0D1117", testId }
         totalMinutesRef.current = target;
         setTotalMinutes(target);
         emitChange(target);
+        startHourAlign(target);
         return;
       }
       totalMinutesRef.current = current;
@@ -498,10 +573,13 @@ export function InlineTimePicker({ value, onChange, fadeBg = "#0D1117", testId }
       animFrame.current = requestAnimationFrame(animate);
     };
     animate();
-  }, [emitChange]);
+  }, [emitChange, startHourAlign]);
 
   const handleTouchStart = useCallback((drum: "hour" | "minute") => (e: React.TouchEvent) => {
     cancelAnimationFrame(animFrame.current);
+    cancelAnimationFrame(hourAlignFrame.current);
+    hourAlignRef.current = 0;
+    setHourAlignOffset(0);
     isDragging.current = drum;
     dragStartY.current = e.touches[0].clientY;
     dragStartMinutes.current = totalMinutesRef.current;
@@ -563,6 +641,9 @@ export function InlineTimePicker({ value, onChange, fadeBg = "#0D1117", testId }
 
   const handleWheel = useCallback((drum: "hour" | "minute") => (e: React.WheelEvent) => {
     cancelAnimationFrame(animFrame.current);
+    cancelAnimationFrame(hourAlignFrame.current);
+    hourAlignRef.current = 0;
+    setHourAlignOffset(0);
     const scale = drum === "hour" ? 30 / INLINE_ITEM_HEIGHT : 7.5 / INLINE_ITEM_HEIGHT;
     const delta = e.deltaY * scale;
     const newTotal = totalMinutesRef.current + delta;
@@ -574,7 +655,7 @@ export function InlineTimePicker({ value, onChange, fadeBg = "#0D1117", testId }
   const hour24 = Math.floor(norm / 60);
   const currentHour12 = to12Hour(hour24);
   const hour12Index = HOURS_12.indexOf(currentHour12);
-  const currentHourFrac = hour12Index;
+  const currentHourFrac = hour12Index + (norm % 60) / 60 + hourAlignOffset;
   const currentMinuteQ = (norm % 60) / 15;
   const ampm = getAmPm(hour24);
 
