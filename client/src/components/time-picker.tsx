@@ -5,7 +5,7 @@ const ITEM_HEIGHT = 72;
 const VISIBLE_COUNT = 5;
 const DRUM_HEIGHT = VISIBLE_COUNT * ITEM_HEIGHT;
 const CENTER_OFFSET = Math.floor(VISIBLE_COUNT / 2) * ITEM_HEIGHT;
-const HOURS_12 = Array.from({ length: 12 }, (_, i) => i === 0 ? 12 : i);
+const HOURS_24 = Array.from({ length: 24 }, (_, i) => i);
 const MINUTES = [0, 15, 30, 45];
 const DECELERATION = 0.94;
 const MIN_VELOCITY = 0.3;
@@ -33,15 +33,6 @@ function formatTime(totalMinutes: number): string {
   const finalM = snappedM === 60 ? 0 : snappedM;
   const finalH = snappedM === 60 ? (h + 1) % 24 : h;
   return `${finalH.toString().padStart(2, "0")}:${finalM.toString().padStart(2, "0")}`;
-}
-
-function to12Hour(hour24: number): number {
-  const h = hour24 % 12;
-  return h === 0 ? 12 : h;
-}
-
-function getAmPm(hour24: number): string {
-  return hour24 < 12 ? "am" : "pm";
 }
 
 interface TimePickerProps {
@@ -217,11 +208,8 @@ export default function TimePicker({ value, onChange, onClose, label }: TimePick
 
   const norm = normalizeMinutes(totalMinutes);
   const hour24 = Math.floor(norm / 60);
-  const currentHour12 = to12Hour(hour24);
-  const hour12Index = HOURS_12.indexOf(currentHour12);
-  const currentHourFrac = hour12Index + (norm % 60) / 60 + hourAlignOffset;
+  const currentHourFrac = hour24 + (norm % 60) / 60 + hourAlignOffset;
   const currentMinuteQ = (norm % 60) / 15;
-  const ampm = getAmPm(hour24);
 
   return (
     <div
@@ -249,7 +237,7 @@ export default function TimePicker({ value, onChange, onClose, label }: TimePick
             type="hour"
             totalMinutes={totalMinutes}
             currentValue={currentHourFrac}
-            items={HOURS_12}
+            items={HOURS_24}
             onTouchStart={handleTouchStart("hour")}
             onWheel={handleWheel("hour")}
           />
@@ -271,21 +259,6 @@ export default function TimePicker({ value, onChange, onClose, label }: TimePick
             onTouchStart={handleTouchStart("minute")}
             onWheel={handleWheel("minute")}
           />
-
-          <div className="ml-1">
-            <AmPmStatic
-              totalMinutes={totalMinutes}
-              size="popup"
-              onToggle={() => {
-                cancelAnimationFrame(animFrame.current);
-                const current = totalMinutesRef.current;
-                const norm = normalizeMinutes(current);
-                const target = norm < 720 ? current + 720 : current - 720;
-                totalMinutesRef.current = target;
-                setTotalMinutes(target);
-              }}
-            />
-          </div>
         </div>
 
         <div className="px-6 pb-6 pt-2">
@@ -321,7 +294,6 @@ function Drum({ type, totalMinutes, currentValue, items, onTouchStart, onWheel }
 
   const norm = normalizeMinutes(totalMinutes);
   const ownerHour24 = Math.floor(norm / 60);
-  const ownerHour12 = to12Hour(ownerHour24);
   const minuteInHour = norm % 60;
   const minuteProgress = minuteInHour / 60;
 
@@ -369,15 +341,15 @@ function Drum({ type, totalMinutes, currentValue, items, onTouchStart, onWheel }
 
         if (isHour) {
           const hourVal = items[itemIndex];
-          if (hourVal === ownerHour12) {
+          if (hourVal === ownerHour24) {
             opacity = 1;
           } else {
-            const nextHour12 = to12Hour((ownerHour24 + 1) % 24);
-            const prevHour12 = to12Hour((ownerHour24 - 1 + 24) % 24);
-            if (hourVal === nextHour12) {
+            const nextHour = (ownerHour24 + 1) % 24;
+            const prevHour = (ownerHour24 - 1 + 24) % 24;
+            if (hourVal === nextHour) {
               const fade = minuteProgress > 0.85 ? (minuteProgress - 0.85) / 0.15 : 0;
               opacity = 0.1 + fade * 0.25;
-            } else if (hourVal === prevHour12) {
+            } else if (hourVal === prevHour) {
               const fade = minuteProgress < 0.15 ? (0.15 - minuteProgress) / 0.15 : 0;
               opacity = 0.1 + fade * 0.25;
             } else {
@@ -403,48 +375,12 @@ function Drum({ type, totalMinutes, currentValue, items, onTouchStart, onWheel }
               "tabular-nums text-foreground leading-none",
               isHour ? "text-6xl font-semibold" : "text-4xl font-light"
             )}>
-              {isHour
-                ? items[itemIndex].toString()
-                : items[itemIndex].toString().padStart(2, "0")
-              }
+              {items[itemIndex].toString().padStart(2, "0")}
             </span>
           </div>
         );
       })}
 
-    </div>
-  );
-}
-
-function AmPmStatic({ totalMinutes, onToggle, size }: { totalMinutes: number; onToggle: () => void; size: "popup" | "inline" }) {
-  const norm = normalizeMinutes(totalMinutes);
-  const label = norm < 720 ? "am" : "pm";
-
-  const isPopup = size === "popup";
-  const drumHeight = isPopup ? DRUM_HEIGHT : INLINE_DRUM_HEIGHT;
-  const centerOffset = isPopup ? CENTER_OFFSET : INLINE_CENTER;
-  const itemHeight = isPopup ? ITEM_HEIGHT : INLINE_ITEM_HEIGHT;
-
-  return (
-    <div
-      className="relative select-none cursor-pointer"
-      style={{ height: drumHeight }}
-      onClick={onToggle}
-      data-testid="drum-ampm"
-    >
-      <div
-        className={cn("absolute inset-x-0 flex items-end", isPopup ? "pb-[14px]" : "pb-[6px]")}
-        style={{ top: centerOffset, height: itemHeight }}
-      >
-        <span
-          className={cn(
-            "font-medium text-white transition-opacity duration-300 leading-none",
-            isPopup ? "text-lg" : "text-[11px]"
-          )}
-        >
-          {label}
-        </span>
-      </div>
     </div>
   );
 }
@@ -645,11 +581,8 @@ export function InlineTimePicker({ value, onChange, fadeBg = "#0D1117", testId }
 
   const norm = normalizeMinutes(totalMinutes);
   const hour24 = Math.floor(norm / 60);
-  const currentHour12 = to12Hour(hour24);
-  const hour12Index = HOURS_12.indexOf(currentHour12);
-  const currentHourFrac = hour12Index + (norm % 60) / 60 + hourAlignOffset;
+  const currentHourFrac = hour24 + (norm % 60) / 60 + hourAlignOffset;
   const currentMinuteQ = (norm % 60) / 15;
-  const ampm = getAmPm(hour24);
 
   const fadeTop = `linear-gradient(to bottom, ${fadeBg} 0%, ${fadeBg}cc 30%, transparent 100%)`;
   const fadeBottom = `linear-gradient(to top, ${fadeBg} 0%, ${fadeBg}cc 30%, transparent 100%)`;
@@ -664,7 +597,7 @@ export function InlineTimePicker({ value, onChange, fadeBg = "#0D1117", testId }
         type="hour"
         totalMinutes={totalMinutes}
         currentValue={currentHourFrac}
-        items={HOURS_12}
+        items={HOURS_24}
         onTouchStart={handleTouchStart("hour")}
         onWheel={handleWheel("hour")}
         fadeTop={fadeTop}
@@ -690,22 +623,6 @@ export function InlineTimePicker({ value, onChange, fadeBg = "#0D1117", testId }
         fadeTop={fadeTop}
         fadeBottom={fadeBottom}
       />
-
-      <div className="ml-0.5">
-        <AmPmStatic
-          totalMinutes={totalMinutes}
-          size="inline"
-          onToggle={() => {
-            cancelAnimationFrame(animFrame.current);
-            const current = totalMinutesRef.current;
-            const n = normalizeMinutes(current);
-            const target = n < 720 ? current + 720 : current - 720;
-            totalMinutesRef.current = target;
-            setTotalMinutes(target);
-            emitChange(target);
-          }}
-        />
-      </div>
     </div>
   );
 }
@@ -731,7 +648,6 @@ function InlineDrum({ type, totalMinutes, currentValue, items, onTouchStart, onW
 
   const norm = normalizeMinutes(totalMinutes);
   const ownerHour24 = Math.floor(norm / 60);
-  const ownerHour12 = to12Hour(ownerHour24);
   const minuteInHour = norm % 60;
   const minuteProgress = minuteInHour / 60;
 
@@ -767,15 +683,15 @@ function InlineDrum({ type, totalMinutes, currentValue, items, onTouchStart, onW
 
         if (isHour) {
           const hourVal = items[itemIndex];
-          if (hourVal === ownerHour12) {
+          if (hourVal === ownerHour24) {
             opacity = 1;
           } else {
-            const nextHour12 = to12Hour((ownerHour24 + 1) % 24);
-            const prevHour12 = to12Hour((ownerHour24 - 1 + 24) % 24);
-            if (hourVal === nextHour12) {
+            const nextHour = (ownerHour24 + 1) % 24;
+            const prevHour = (ownerHour24 - 1 + 24) % 24;
+            if (hourVal === nextHour) {
               const fade = minuteProgress > 0.85 ? (minuteProgress - 0.85) / 0.15 : 0;
               opacity = 0.1 + fade * 0.25;
-            } else if (hourVal === prevHour12) {
+            } else if (hourVal === prevHour) {
               const fade = minuteProgress < 0.15 ? (0.15 - minuteProgress) / 0.15 : 0;
               opacity = 0.1 + fade * 0.25;
             } else {
@@ -801,10 +717,7 @@ function InlineDrum({ type, totalMinutes, currentValue, items, onTouchStart, onW
               "tabular-nums text-foreground leading-none",
               isHour ? "text-2xl font-semibold" : "text-lg font-light"
             )}>
-              {isHour
-                ? items[itemIndex].toString()
-                : items[itemIndex].toString().padStart(2, "0")
-              }
+              {items[itemIndex].toString().padStart(2, "0")}
             </span>
           </div>
         );
