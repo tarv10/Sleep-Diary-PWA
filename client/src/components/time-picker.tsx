@@ -396,9 +396,10 @@ interface InlineTimePickerProps {
   fadeBg?: string;
   testId?: string;
   color?: string;
+  colorMix?: number;
 }
 
-export function InlineTimePicker({ value, onChange, fadeBg = "#0D1117", testId, color }: InlineTimePickerProps) {
+export function InlineTimePicker({ value, onChange, fadeBg = "#0D1117", testId, color, colorMix = 65 }: InlineTimePickerProps) {
   const [totalMinutes, setTotalMinutes] = useState(() => parseTime(value));
   const totalMinutesRef = useRef(totalMinutes);
   const [hourAlignOffset, setHourAlignOffset] = useState(() => {
@@ -611,6 +612,7 @@ export function InlineTimePicker({ value, onChange, fadeBg = "#0D1117", testId, 
         fadeTop={fadeTop}
         fadeBottom={fadeBottom}
         color={color}
+        colorMix={colorMix}
         settled={settled}
       />
 
@@ -633,6 +635,7 @@ export function InlineTimePicker({ value, onChange, fadeBg = "#0D1117", testId, 
         fadeTop={fadeTop}
         fadeBottom={fadeBottom}
         color={color}
+        colorMix={colorMix}
         settled={settled}
       />
     </div>
@@ -649,10 +652,11 @@ interface InlineDrumProps {
   fadeTop: string;
   fadeBottom: string;
   color?: string;
+  colorMix?: number;
   settled?: boolean;
 }
 
-function InlineDrum({ type, totalMinutes, currentValue, items, onTouchStart, onWheel, fadeTop, fadeBottom, color, settled }: InlineDrumProps) {
+function InlineDrum({ type, totalMinutes, currentValue, items, onTouchStart, onWheel, fadeTop, fadeBottom, color, colorMix = 65, settled }: InlineDrumProps) {
   const count = items.length;
   const intIndex = Math.floor(currentValue);
   const fraction = currentValue - intIndex;
@@ -735,7 +739,7 @@ function InlineDrum({ type, totalMinutes, currentValue, items, onTouchStart, onW
               style={
                 color && distFromCenter < 0.5
                   ? {
-                      color: settled ? `color-mix(in srgb, ${color} 65%, white)` : undefined,
+                      color: settled ? `color-mix(in srgb, ${color} ${colorMix}%, white)` : undefined,
                       transition: settled ? "color 1.8s ease-in" : "color 0.15s ease-out",
                     }
                   : undefined
