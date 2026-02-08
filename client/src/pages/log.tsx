@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { ChevronLeft, ChevronRight, Plus, X, Trash2, Star, Check, Moon, Sun, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -26,6 +26,34 @@ import {
   getCalendarDays,
   formatMonthYear,
 } from "@/lib/sleepUtils";
+
+function FadeValue({ value, className, testId }: { value: string; className?: string; testId?: string }) {
+  const [display, setDisplay] = useState(value);
+  const [fading, setFading] = useState(false);
+  const prev = useRef(value);
+
+  useEffect(() => {
+    if (value !== prev.current) {
+      setFading(true);
+      const t = setTimeout(() => {
+        setDisplay(value);
+        setFading(false);
+        prev.current = value;
+      }, 200);
+      return () => clearTimeout(t);
+    }
+  }, [value]);
+
+  return (
+    <div
+      className={cn(className, "transition-opacity duration-200")}
+      style={{ opacity: fading ? 0.2 : 1 }}
+      data-testid={testId}
+    >
+      {display}
+    </div>
+  );
+}
 
 interface LogPageProps {
   initialDate?: string;
@@ -460,40 +488,37 @@ export default function LogPage({ initialDate }: LogPageProps) {
         ))}
       </div>
 
-      {/* ── Metrics Strip (Hero) ── */}
+      {/* ── Metrics Strip ── */}
       <div className="mt-8 mb-8">
         <div className="flex items-baseline justify-center gap-6">
           <div className="text-center">
-            <div
-              className="text-4xl font-light tabular-nums text-foreground tracking-tight"
-              data-testid="metric-asleep"
-            >
-              {formatDuration(metrics.totalSleep)}
-            </div>
+            <FadeValue
+              value={formatDuration(metrics.totalSleep)}
+              className="text-sm font-light tabular-nums text-foreground/70"
+              testId="metric-asleep"
+            />
             <div className="text-[10px] text-muted-foreground/40 mt-1 uppercase tracking-[0.2em]">
               Asleep
             </div>
           </div>
-          <div className="w-px h-8 bg-border/20" />
+          <div className="w-px h-4 bg-border/20" />
           <div className="text-center">
-            <div
-              className="text-2xl font-light tabular-nums text-zone-sleep"
-              data-testid="metric-efficiency"
-            >
-              {formatEfficiency(metrics.sleepEfficiency)}
-            </div>
+            <FadeValue
+              value={formatEfficiency(metrics.sleepEfficiency)}
+              className="text-sm font-light tabular-nums text-foreground/70"
+              testId="metric-efficiency"
+            />
             <div className="text-[10px] text-muted-foreground/40 mt-1 uppercase tracking-[0.2em]">
               Efficiency
             </div>
           </div>
-          <div className="w-px h-8 bg-border/20" />
+          <div className="w-px h-4 bg-border/20" />
           <div className="text-center">
-            <div
-              className="text-2xl font-light tabular-nums text-foreground/60"
-              data-testid="metric-in-bed"
-            >
-              {formatDuration(metrics.timeInBed)}
-            </div>
+            <FadeValue
+              value={formatDuration(metrics.timeInBed)}
+              className="text-sm font-light tabular-nums text-foreground/70"
+              testId="metric-in-bed"
+            />
             <div className="text-[10px] text-muted-foreground/40 mt-1 uppercase tracking-[0.2em]">
               In bed
             </div>

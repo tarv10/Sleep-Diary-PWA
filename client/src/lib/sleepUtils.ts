@@ -47,12 +47,11 @@ export function calculateMetrics(entry: {
 }
 
 export function formatDuration(minutes: number): string {
-  if (minutes <= 0) return "0m";
+  if (minutes <= 0) return "0:00hrs";
   const h = Math.floor(minutes / 60);
   const m = Math.round(minutes % 60);
   if (h === 0) return `${m}m`;
-  if (m === 0) return `${h}h`;
-  return `${h}h ${m}m`;
+  return `${h}:${m.toString().padStart(2, "0")}hrs`;
 }
 
 export function formatEfficiency(pct: number): string {
