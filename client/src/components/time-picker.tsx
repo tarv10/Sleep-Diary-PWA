@@ -10,6 +10,12 @@ const MINUTES = [0, 15, 30, 45];
 const DECELERATION = 0.94;
 const MIN_VELOCITY = 0.3;
 
+function curvedDelta(dy: number, itemHeight: number): number {
+  const normalized = dy / itemHeight;
+  const curved = Math.sign(normalized) * Math.pow(Math.abs(normalized), 1.4);
+  return curved * itemHeight;
+}
+
 function normalizeMinutes(m: number): number {
   return ((m % 1440) + 1440) % 1440;
 }
@@ -127,8 +133,9 @@ export default function TimePicker({ value, onChange, onClose, label }: TimePick
 
     const y = e.touches[0].clientY;
     const dy = y - dragStartY.current;
+    const curved = curvedDelta(dy, ITEM_HEIGHT);
     const scale = isDragging.current === "hour" ? 30 / ITEM_HEIGHT : 7.5 / ITEM_HEIGHT;
-    const newTotal = dragStartMinutes.current - dy * scale;
+    const newTotal = dragStartMinutes.current - curved * scale;
 
     const now = Date.now();
     const dt = now - lastTime.current;
@@ -148,8 +155,9 @@ export default function TimePicker({ value, onChange, onClose, label }: TimePick
     isDragging.current = null;
 
     const vel = velocity.current;
-    if (Math.abs(vel) > 0.1) {
-      snapAndAnimate(totalMinutesRef.current, vel, drum);
+    const amplified = Math.sign(vel) * Math.pow(Math.abs(vel), 1.3);
+    if (Math.abs(amplified) > 0.1) {
+      snapAndAnimate(totalMinutesRef.current, amplified, drum);
     } else {
       const snapped = Math.round(totalMinutesRef.current / 15) * 15;
       animateToTarget(totalMinutesRef.current, snapped);
@@ -537,8 +545,9 @@ export function InlineTimePicker({ value, onChange, fadeBg = "#0D1117", testId }
 
       const y = e.touches[0].clientY;
       const dy = y - dragStartY.current;
+      const curved = curvedDelta(dy, INLINE_ITEM_HEIGHT);
       const scale = isDragging.current === "hour" ? 30 / INLINE_ITEM_HEIGHT : 7.5 / INLINE_ITEM_HEIGHT;
-      const newTotal = dragStartMinutes.current - dy * scale;
+      const newTotal = dragStartMinutes.current - curved * scale;
 
       const now = Date.now();
       const dt = now - lastTime.current;
@@ -558,8 +567,9 @@ export function InlineTimePicker({ value, onChange, fadeBg = "#0D1117", testId }
       isDragging.current = null;
 
       const vel = velocity.current;
-      if (Math.abs(vel) > 0.1) {
-        snapAndAnimate(totalMinutesRef.current, vel, drum);
+      const amplified = Math.sign(vel) * Math.pow(Math.abs(vel), 1.3);
+      if (Math.abs(amplified) > 0.1) {
+        snapAndAnimate(totalMinutesRef.current, amplified, drum);
       } else {
         const snapped = Math.round(totalMinutesRef.current / 15) * 15;
         animateToTarget(totalMinutesRef.current, snapped);
