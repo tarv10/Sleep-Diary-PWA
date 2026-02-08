@@ -29,40 +29,34 @@ import {
 
 function FadeValue({ value, className, testId }: { value: string; className?: string; testId?: string }) {
   const [display, setDisplay] = useState(value);
-  const [phase, setPhase] = useState<"visible" | "fading-out" | "fading-in">("visible");
+  const [fading, setFading] = useState(false);
+  const latestValue = useRef(value);
   const timer = useRef<ReturnType<typeof setTimeout>>();
 
+  latestValue.current = value;
+
   useEffect(() => {
-    if (value === display) return;
-    if (phase !== "visible") return;
-    setPhase("fading-out");
+    if (value === display) {
+      setFading(false);
+      return;
+    }
+    if (fading) return;
+    setFading(true);
     clearTimeout(timer.current);
     timer.current = setTimeout(() => {
-      setDisplay(value);
-      setPhase("fading-in");
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => setPhase("visible"));
-      });
-    }, 180);
+      setDisplay(latestValue.current);
+      setFading(false);
+    }, 150);
     return () => clearTimeout(timer.current);
-  }, [value, display, phase]);
-
-  const style: Record<string, string> = {};
-  if (phase === "fading-out") {
-    style.opacity = "0";
-    style.transition = "opacity 180ms ease-out";
-  } else if (phase === "fading-in") {
-    style.opacity = "0";
-    style.transition = "none";
-  } else {
-    style.opacity = "1";
-    style.transition = "opacity 180ms ease-in";
-  }
+  }, [value, display, fading]);
 
   return (
     <div
       className={cn(className)}
-      style={style}
+      style={{
+        opacity: fading ? 0 : 1,
+        transition: fading ? "opacity 120ms ease-out" : "opacity 150ms ease-in",
+      }}
       data-testid={testId}
     >
       {display}
