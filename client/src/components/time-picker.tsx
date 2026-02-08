@@ -408,6 +408,7 @@ export function InlineTimePicker({ value, onChange, fadeBg = "#0D1117", testId, 
   const hourAlignRef = useRef(hourAlignOffset);
   const hourAlignFrame = useRef<number>(0);
   const isDragging = useRef<"hour" | "minute" | null>(null);
+  const [settled, setSettled] = useState(true);
   const dragStartY = useRef(0);
   const dragStartMinutes = useRef(0);
   const lastY = useRef(0);
@@ -499,6 +500,7 @@ export function InlineTimePicker({ value, onChange, fadeBg = "#0D1117", testId, 
         setTotalMinutes(target);
         emitChange(target);
         startHourAlign(target);
+        setSettled(true);
         return;
       }
       totalMinutesRef.current = current;
@@ -517,6 +519,7 @@ export function InlineTimePicker({ value, onChange, fadeBg = "#0D1117", testId, 
     lastY.current = e.touches[0].clientY;
     lastTime.current = Date.now();
     velocity.current = 0;
+    setSettled(false);
   }, []);
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -573,6 +576,7 @@ export function InlineTimePicker({ value, onChange, fadeBg = "#0D1117", testId, 
   const handleWheel = useCallback((drum: "hour" | "minute") => (e: React.WheelEvent) => {
     cancelAnimationFrame(animFrame.current);
     cancelAnimationFrame(hourAlignFrame.current);
+    setSettled(false);
     const scale = drum === "hour" ? 30 / INLINE_ITEM_HEIGHT : 7.5 / INLINE_ITEM_HEIGHT;
     const delta = e.deltaY * scale;
     const newTotal = totalMinutesRef.current + delta;
@@ -604,12 +608,13 @@ export function InlineTimePicker({ value, onChange, fadeBg = "#0D1117", testId, 
         fadeTop={fadeTop}
         fadeBottom={fadeBottom}
         color={color}
+        settled={settled}
       />
 
       <div className="relative select-none" style={{ height: INLINE_DRUM_HEIGHT, width: 8 }}>
         <div
-          className="absolute inset-x-0 flex items-end justify-center pb-[6px] text-lg font-light leading-none"
-          style={{ top: INLINE_CENTER, height: INLINE_ITEM_HEIGHT, color: color || undefined, opacity: 0.25 }}
+          className="absolute inset-x-0 flex items-end justify-center pb-[6px] text-lg font-light leading-none text-foreground/25"
+          style={{ top: INLINE_CENTER, height: INLINE_ITEM_HEIGHT }}
         >
           :
         </div>
@@ -625,6 +630,7 @@ export function InlineTimePicker({ value, onChange, fadeBg = "#0D1117", testId, 
         fadeTop={fadeTop}
         fadeBottom={fadeBottom}
         color={color}
+        settled={settled}
       />
     </div>
   );
@@ -640,9 +646,10 @@ interface InlineDrumProps {
   fadeTop: string;
   fadeBottom: string;
   color?: string;
+  settled?: boolean;
 }
 
-function InlineDrum({ type, totalMinutes, currentValue, items, onTouchStart, onWheel, fadeTop, fadeBottom, color }: InlineDrumProps) {
+function InlineDrum({ type, totalMinutes, currentValue, items, onTouchStart, onWheel, fadeTop, fadeBottom, color, settled }: InlineDrumProps) {
   const count = items.length;
   const intIndex = Math.floor(currentValue);
   const fraction = currentValue - intIndex;
@@ -719,11 +726,17 @@ function InlineDrum({ type, totalMinutes, currentValue, items, onTouchStart, onW
           >
             <span
               className={cn(
-                "tabular-nums leading-none",
-                !color && "text-foreground",
+                "tabular-nums leading-none text-foreground",
                 isHour ? "text-2xl font-semibold" : "text-lg font-light"
               )}
-              style={color ? { color } : undefined}
+              style={
+                color && distFromCenter < 0.5
+                  ? {
+                      color: settled ? color : undefined,
+                      transition: settled ? "color 1.8s ease-in" : "color 0.15s ease-out",
+                    }
+                  : undefined
+              }
             >
               {items[itemIndex].toString().padStart(2, "0")}
             </span>
