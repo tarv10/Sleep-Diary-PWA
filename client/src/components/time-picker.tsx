@@ -177,7 +177,7 @@ export default function TimePicker({ value, onChange, onClose, label }: TimePick
   const hour24 = Math.floor(norm / 60);
   const currentHour12 = to12Hour(hour24);
   const hour12Index = HOURS_12.indexOf(currentHour12);
-  const currentHourFrac = hour12Index + (norm % 60) / 60 - 0.5;
+  const currentHourFrac = hour12Index + (norm % 60) / 60 - 0.25;
   const currentMinuteQ = (norm % 60) / 15;
   const ampm = getAmPm(hour24);
 
@@ -587,7 +587,7 @@ export function InlineTimePicker({ value, onChange, fadeBg = "#0D1117", testId }
   const hour24 = Math.floor(norm / 60);
   const currentHour12 = to12Hour(hour24);
   const hour12Index = HOURS_12.indexOf(currentHour12);
-  const currentHourFrac = hour12Index + (norm % 60) / 60 - 0.5;
+  const currentHourFrac = hour12Index + (norm % 60) / 60 - 0.25;
   const currentMinuteQ = (norm % 60) / 15;
   const ampm = getAmPm(hour24);
 
