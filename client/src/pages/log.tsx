@@ -333,19 +333,23 @@ export default function LogPage({ initialDate }: LogPageProps) {
 
       {/* ── The Night (Sleep Zone) ── */}
       <div className="mb-2 rounded-md bg-zone-sleep-bg/60 px-3 pb-3 pt-4 -mx-1">
-        <div className="relative flex justify-between gap-5">
+        <div className="flex items-start">
           <div className="flex flex-col items-center flex-1" data-testid="input-bedtime">
             <Moon className="w-4 h-4 mb-1.5" strokeWidth={1.5} style={{ color: "hsl(120, 35%, 48%)" }} />
             <span className="text-[10px] uppercase tracking-[0.15em] mb-1" style={{ color: "hsl(120, 35%, 48%)" }}>In bed</span>
             <InlineTimePicker value={bedtime} onChange={setBedtime} fadeBg="#0f1219" testId="input-bedtime-picker" color="hsl(120, 35%, 48%)" />
           </div>
-          <div className="absolute left-[33.333%] -translate-x-1/2 pointer-events-none" style={{ top: 94, height: 1, width: 20, opacity: 0.25, background: "linear-gradient(to right, hsl(120, 35%, 48%), hsl(200, 75%, 60%))" }} />
+          <div className="flex-shrink-0 pointer-events-none" style={{ width: 20, paddingTop: 93 }}>
+            <div style={{ height: 1, opacity: 0.25, background: "linear-gradient(to right, hsl(120, 35%, 48%), hsl(200, 75%, 60%))" }} />
+          </div>
           <div className="flex flex-col items-center flex-1" data-testid="input-sleep-time">
             <CloudMoon className="w-4 h-4 mb-1.5" strokeWidth={1.5} style={{ color: "hsl(200, 75%, 60%)" }} />
             <span className="text-[10px] uppercase tracking-[0.15em] mb-1" style={{ color: "hsl(200, 75%, 60%)" }}>Asleep</span>
             <InlineTimePicker value={sleepTime} onChange={setSleepTime} fadeBg="#0f1219" testId="input-sleep-time-picker" color="hsl(200, 75%, 60%)" colorMix={70} />
           </div>
-          <div className="absolute left-[66.666%] -translate-x-1/2 pointer-events-none" style={{ top: 94, height: 1, width: 20, opacity: 0.25, background: "linear-gradient(to right, hsl(200, 75%, 60%), hsl(45, 70%, 55%))" }} />
+          <div className="flex-shrink-0 pointer-events-none" style={{ width: 20, paddingTop: 93 }}>
+            <div style={{ height: 1, opacity: 0.25, background: "linear-gradient(to right, hsl(200, 75%, 60%), hsl(45, 70%, 55%))" }} />
+          </div>
           <div className="flex flex-col items-center flex-1" data-testid="input-wake-time">
             <Sunrise className="w-4 h-4 mb-1.5" strokeWidth={1.5} style={{ color: "hsl(45, 70%, 55%)" }} />
             <span className="text-[10px] uppercase tracking-[0.15em] mb-1" style={{ color: "hsl(45, 70%, 55%)" }}>Awake</span>
