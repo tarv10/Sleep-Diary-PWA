@@ -723,7 +723,15 @@ function InlineDrum({ type, totalMinutes, currentValue, items, onTouchStart, onW
           if (minuteVal === currentQuarter) {
             opacity = 1;
           } else {
-            opacity = 0.08;
+            const quarterDist = Math.min(
+              Math.abs(minuteVal - minuteInHour),
+              60 - Math.abs(minuteVal - minuteInHour)
+            );
+            if (quarterDist <= 15) {
+              opacity = 0.25;
+            } else {
+              opacity = 0.12;
+            }
           }
         }
 
