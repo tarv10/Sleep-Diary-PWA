@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import { ChevronLeft, ChevronRight, Plus, X, Trash2, Star, Check, BedDouble, CloudMoon, Sunrise, Save } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, X, Trash2, Star, Check, Moon, CloudMoon, Sunrise, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
@@ -335,7 +335,7 @@ export default function LogPage({ initialDate }: LogPageProps) {
       <div className="mb-2 rounded-md bg-zone-sleep-bg/60 px-3 pb-3 pt-4 -mx-1">
         <div className="flex items-start">
           <div className="flex flex-col items-center flex-1" data-testid="input-bedtime">
-            <BedDouble className="w-4 h-4 mb-1.5" strokeWidth={1.5} style={{ color: "hsl(120, 35%, 48%)" }} />
+            <Moon className="w-4 h-4 mb-1.5" strokeWidth={1.5} style={{ color: "hsl(120, 35%, 48%)" }} />
             <span className="text-[10px] uppercase tracking-[0.15em] mb-1" style={{ color: "hsl(120, 35%, 48%)" }}>In bed</span>
             <InlineTimePicker value={bedtime} onChange={setBedtime} fadeBg="#0f1219" testId="input-bedtime-picker" color="hsl(120, 35%, 48%)" />
           </div>
