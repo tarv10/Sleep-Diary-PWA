@@ -618,7 +618,7 @@ export function InlineTimePicker({ value, onChange, fadeBg = "#0D1117", testId, 
 
       <div className="relative select-none" style={{ height: INLINE_DRUM_HEIGHT, width: 8 }}>
         <div
-          className="absolute inset-x-0 flex items-end justify-center pb-[6px] text-lg font-light leading-none text-foreground/25"
+          className="absolute inset-x-0 flex items-center justify-center text-lg font-light leading-none text-foreground/25"
           style={{ top: INLINE_CENTER, height: INLINE_ITEM_HEIGHT }}
         >
           :
