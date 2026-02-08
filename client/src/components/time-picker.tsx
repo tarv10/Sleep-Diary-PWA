@@ -317,11 +317,11 @@ function Drum({ type, totalMinutes, currentValue, items, onTouchStart, onWheel }
             const nextHour12 = to12Hour((ownerHour24 + 1) % 24);
             const prevHour12 = to12Hour((ownerHour24 - 1 + 24) % 24);
             if (hourVal === nextHour12) {
-              const fade = minuteProgress > 0.75 ? (minuteProgress - 0.75) * 4 : 0;
-              opacity = 0.12 + fade * 0.5;
+              const fade = minuteProgress > 0.85 ? (minuteProgress - 0.85) / 0.15 : 0;
+              opacity = 0.1 + fade * 0.25;
             } else if (hourVal === prevHour12) {
-              const fade = minuteProgress < 0.25 ? (0.25 - minuteProgress) * 4 : 0;
-              opacity = 0.12 + fade * 0.5;
+              const fade = minuteProgress < 0.15 ? (0.15 - minuteProgress) / 0.15 : 0;
+              opacity = 0.1 + fade * 0.25;
             } else {
               opacity = 0.08;
             }
@@ -738,11 +738,11 @@ function InlineDrum({ type, totalMinutes, currentValue, items, onTouchStart, onW
             const nextHour12 = to12Hour((ownerHour24 + 1) % 24);
             const prevHour12 = to12Hour((ownerHour24 - 1 + 24) % 24);
             if (hourVal === nextHour12) {
-              const fade = minuteProgress > 0.75 ? (minuteProgress - 0.75) * 4 : 0;
-              opacity = 0.12 + fade * 0.5;
+              const fade = minuteProgress > 0.85 ? (minuteProgress - 0.85) / 0.15 : 0;
+              opacity = 0.1 + fade * 0.25;
             } else if (hourVal === prevHour12) {
-              const fade = minuteProgress < 0.25 ? (0.25 - minuteProgress) * 4 : 0;
-              opacity = 0.12 + fade * 0.5;
+              const fade = minuteProgress < 0.15 ? (0.15 - minuteProgress) / 0.15 : 0;
+              opacity = 0.1 + fade * 0.25;
             } else {
               opacity = 0.08;
             }
