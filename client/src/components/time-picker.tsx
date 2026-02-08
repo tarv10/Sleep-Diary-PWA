@@ -222,7 +222,7 @@ export default function TimePicker({ value, onChange, onClose, label }: TimePick
 
           <div className="relative select-none -mx-1" style={{ height: DRUM_HEIGHT }}>
             <div
-              className="absolute inset-x-0 flex items-center justify-center text-5xl font-light text-foreground/20"
+              className="absolute inset-x-0 flex items-center justify-center text-4xl font-light text-foreground/20"
               style={{ top: CENTER_OFFSET, height: ITEM_HEIGHT }}
             >
               :
@@ -241,6 +241,7 @@ export default function TimePicker({ value, onChange, onClose, label }: TimePick
           <div className="ml-1">
             <AmPmStatic
               totalMinutes={totalMinutes}
+              size="popup"
               onToggle={() => {
                 cancelAnimationFrame(animFrame.current);
                 const current = totalMinutesRef.current;
@@ -381,22 +382,33 @@ function Drum({ type, totalMinutes, currentValue, items, onTouchStart, onWheel }
   );
 }
 
-function AmPmStatic({ totalMinutes, onToggle }: { totalMinutes: number; onToggle: () => void }) {
+function AmPmStatic({ totalMinutes, onToggle, size }: { totalMinutes: number; onToggle: () => void; size: "popup" | "inline" }) {
   const norm = normalizeMinutes(totalMinutes);
   const label = norm < 720 ? "am" : "pm";
+
+  const isPopup = size === "popup";
+  const drumHeight = isPopup ? DRUM_HEIGHT : INLINE_DRUM_HEIGHT;
+  const centerOffset = isPopup ? CENTER_OFFSET : INLINE_CENTER;
+  const itemHeight = isPopup ? ITEM_HEIGHT : INLINE_ITEM_HEIGHT;
 
   return (
     <div
       className="relative select-none cursor-pointer"
-      style={{ height: DRUM_HEIGHT }}
+      style={{ height: drumHeight }}
       onClick={onToggle}
       data-testid="drum-ampm"
     >
       <div
-        className="absolute inset-x-0 flex items-end justify-center"
-        style={{ top: CENTER_OFFSET, height: ITEM_HEIGHT, paddingBottom: 10 }}
+        className="absolute inset-x-0 flex items-center"
+        style={{ top: centerOffset, height: itemHeight }}
       >
-        <span className="text-lg font-medium text-white/70 transition-opacity duration-300">
+        <span
+          className={cn(
+            "font-medium text-white transition-opacity duration-300 leading-none",
+            isPopup ? "text-lg" : "text-[11px]"
+          )}
+          style={{ transform: `translateY(${isPopup ? 5 : 2}px)` }}
+        >
           {label}
         </span>
       </div>
@@ -607,28 +619,20 @@ export function InlineTimePicker({ value, onChange, fadeBg = "#0D1117", testId }
         fadeBottom={fadeBottom}
       />
 
-      <div
-        className="relative select-none ml-0.5 cursor-pointer"
-        style={{ height: INLINE_DRUM_HEIGHT, width: 22 }}
-        onClick={() => {
-          cancelAnimationFrame(animFrame.current);
-          const current = totalMinutesRef.current;
-          const n = normalizeMinutes(current);
-          const target = n < 720 ? current + 720 : current - 720;
-          totalMinutesRef.current = target;
-          setTotalMinutes(target);
-          emitChange(target);
-        }}
-        data-testid="inline-drum-ampm"
-      >
-        <div
-          className="absolute inset-x-0 flex items-end justify-center"
-          style={{ top: INLINE_CENTER, height: INLINE_ITEM_HEIGHT, paddingBottom: 2 }}
-        >
-          <span className="text-[11px] font-medium text-white/60 transition-opacity duration-300">
-            {ampm}
-          </span>
-        </div>
+      <div className="ml-0.5">
+        <AmPmStatic
+          totalMinutes={totalMinutes}
+          size="inline"
+          onToggle={() => {
+            cancelAnimationFrame(animFrame.current);
+            const current = totalMinutesRef.current;
+            const n = normalizeMinutes(current);
+            const target = n < 720 ? current + 720 : current - 720;
+            totalMinutesRef.current = target;
+            setTotalMinutes(target);
+            emitChange(target);
+          }}
+        />
       </div>
     </div>
   );
