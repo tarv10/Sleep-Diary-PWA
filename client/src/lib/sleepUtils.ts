@@ -25,7 +25,7 @@ export function calculateMetrics(entry: {
     (sum, w) => sum + timeDiffMinutes(w.start, w.end),
     0
   );
-  const totalSleep = Math.max(0, timeInBed - sleepLatency - totalWakingTime);
+  const totalSleep = Math.max(0, timeDiffMinutes(entry.sleepTime, entry.wakeTime) - totalWakingTime);
   const sleepEfficiency = timeInBed > 0 ? (totalSleep / timeInBed) * 100 : 0;
 
   let napDuration = 0;
