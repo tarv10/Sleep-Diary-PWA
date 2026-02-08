@@ -29,30 +29,40 @@ import {
 
 function FadeValue({ value, className, testId }: { value: string; className?: string; testId?: string }) {
   const [display, setDisplay] = useState(value);
-  const [opacity, setOpacity] = useState(1);
-  const pending = useRef<string | null>(null);
+  const [phase, setPhase] = useState<"visible" | "fading-out" | "fading-in">("visible");
   const timer = useRef<ReturnType<typeof setTimeout>>();
 
   useEffect(() => {
-    if (value !== display && pending.current !== value) {
-      pending.current = value;
-      setOpacity(0);
-      clearTimeout(timer.current);
-      timer.current = setTimeout(() => {
-        setDisplay(value);
-        pending.current = null;
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => setOpacity(1));
-        });
-      }, 200);
-    }
+    if (value === display) return;
+    if (phase !== "visible") return;
+    setPhase("fading-out");
+    clearTimeout(timer.current);
+    timer.current = setTimeout(() => {
+      setDisplay(value);
+      setPhase("fading-in");
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => setPhase("visible"));
+      });
+    }, 180);
     return () => clearTimeout(timer.current);
-  }, [value, display]);
+  }, [value, display, phase]);
+
+  const style: Record<string, string> = {};
+  if (phase === "fading-out") {
+    style.opacity = "0";
+    style.transition = "opacity 180ms ease-out";
+  } else if (phase === "fading-in") {
+    style.opacity = "0";
+    style.transition = "none";
+  } else {
+    style.opacity = "1";
+    style.transition = "opacity 180ms ease-in";
+  }
 
   return (
     <div
       className={cn(className)}
-      style={{ opacity, transition: "opacity 200ms ease" }}
+      style={style}
       data-testid={testId}
     >
       {display}
