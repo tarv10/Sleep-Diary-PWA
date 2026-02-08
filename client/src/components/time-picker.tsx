@@ -222,7 +222,7 @@ export default function TimePicker({ value, onChange, onClose, label }: TimePick
 
           <div className="relative select-none -mx-1" style={{ height: DRUM_HEIGHT }}>
             <div
-              className="absolute inset-x-0 flex items-center justify-center text-4xl font-light text-foreground/20"
+              className="absolute inset-x-0 flex items-end justify-center pb-[10px] text-4xl font-light text-foreground/20 leading-none"
               style={{ top: CENTER_OFFSET, height: ITEM_HEIGHT }}
             >
               :
@@ -357,7 +357,7 @@ function Drum({ type, totalMinutes, currentValue, items, onTouchStart, onWheel }
         return (
           <div
             key={i}
-            className="absolute inset-x-0 flex items-center justify-center"
+            className="absolute inset-x-0 flex items-end justify-center pb-[10px]"
             style={{
               height: ITEM_HEIGHT,
               transform: `translateY(${y}px) scale(${scale})`,
@@ -366,7 +366,7 @@ function Drum({ type, totalMinutes, currentValue, items, onTouchStart, onWheel }
             }}
           >
             <span className={cn(
-              "tabular-nums text-foreground",
+              "tabular-nums text-foreground leading-none",
               isHour ? "text-6xl font-semibold" : "text-4xl font-light"
             )}>
               {isHour
@@ -399,7 +399,7 @@ function AmPmStatic({ totalMinutes, onToggle, size }: { totalMinutes: number; on
       data-testid="drum-ampm"
     >
       <div
-        className="absolute inset-x-0 flex items-center"
+        className={cn("absolute inset-x-0 flex items-end", isPopup ? "pb-[10px]" : "pb-[4px]")}
         style={{ top: centerOffset, height: itemHeight }}
       >
         <span
@@ -407,7 +407,6 @@ function AmPmStatic({ totalMinutes, onToggle, size }: { totalMinutes: number; on
             "font-medium text-white transition-opacity duration-300 leading-none",
             isPopup ? "text-lg" : "text-[11px]"
           )}
-          style={{ transform: `translateY(${isPopup ? 5 : 2}px)` }}
         >
           {label}
         </span>
@@ -601,7 +600,7 @@ export function InlineTimePicker({ value, onChange, fadeBg = "#0D1117", testId }
 
       <div className="relative select-none" style={{ height: INLINE_DRUM_HEIGHT, width: 8 }}>
         <div
-          className="absolute inset-x-0 flex items-center justify-center text-xl font-light text-foreground/25"
+          className="absolute inset-x-0 flex items-end justify-center pb-[4px] text-lg font-light text-foreground/25 leading-none"
           style={{ top: INLINE_CENTER, height: INLINE_ITEM_HEIGHT }}
         >
           :
@@ -717,7 +716,7 @@ function InlineDrum({ type, totalMinutes, currentValue, items, onTouchStart, onW
         return (
           <div
             key={i}
-            className="absolute inset-x-0 flex items-center justify-center"
+            className="absolute inset-x-0 flex items-end justify-center pb-[4px]"
             style={{
               height: INLINE_ITEM_HEIGHT,
               transform: `translateY(${y}px) scale(${scale})`,
@@ -726,7 +725,7 @@ function InlineDrum({ type, totalMinutes, currentValue, items, onTouchStart, onW
             }}
           >
             <span className={cn(
-              "tabular-nums text-foreground",
+              "tabular-nums text-foreground leading-none",
               isHour ? "text-2xl font-semibold" : "text-lg font-light"
             )}>
               {isHour
