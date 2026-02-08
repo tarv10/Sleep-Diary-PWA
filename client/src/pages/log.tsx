@@ -5,7 +5,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import TimePicker, { InlineTimePicker } from "@/components/time-picker";
-import type { SleepEntry, NightWaking, FactorDefinition } from "@shared/schema";
+import type { SleepEntry, NightWaking, NapEntry, FactorDefinition } from "@shared/schema";
 import {
   getEntryByDate,
   saveEntry,
@@ -40,8 +40,7 @@ export default function LogPage({ initialDate }: LogPageProps) {
   const [sleepTime, setSleepTime] = useState(defaults.defaultSleepTime);
   const [wakeTime, setWakeTime] = useState(defaults.defaultWakeTime);
   const [nightWakings, setNightWakings] = useState<NightWaking[]>([]);
-  const [hasNap, setHasNap] = useState(false);
-  const [napMinutes, setNapMinutes] = useState(30);
+  const [naps, setNaps] = useState<NapEntry[]>([]);
   const factorDefs = defaults.factors;
   const initFV: Record<string, number | boolean> = {};
   factorDefs.forEach((f) => {
@@ -79,13 +78,19 @@ export default function LogPage({ initialDate }: LogPageProps) {
       setWakeTime(entry.wakeTime);
       setNightWakings(entry.nightWakings);
       manualEndIds.current = new Set(entry.nightWakings.map((w) => w.id));
-      setHasNap(!!entry.napStart);
-      if (entry.napStart && entry.napEnd) {
+      if (entry.naps && entry.naps.length > 0) {
+        setNaps(entry.naps);
+      } else if (entry.napStart && entry.napEnd) {
         const [sh, sm] = entry.napStart.split(":").map(Number);
         const [eh, em] = entry.napEnd.split(":").map(Number);
-        setNapMinutes(Math.max(0, (eh * 60 + em) - (sh * 60 + sm)));
+        const mins = Math.max(0, (eh * 60 + em) - (sh * 60 + sm));
+        if (mins > 0) {
+          setNaps([{ id: generateId(), minutes: mins }]);
+        } else {
+          setNaps([]);
+        }
       } else {
-        setNapMinutes(30);
+        setNaps([]);
       }
       const loadedFV: Record<string, number | boolean> = {};
       factorDefs.forEach((f) => {
@@ -102,8 +107,7 @@ export default function LogPage({ initialDate }: LogPageProps) {
       setWakeTime(s.defaultWakeTime);
       manualEndIds.current.clear();
       setNightWakings([]);
-      setHasNap(false);
-      setNapMinutes(30);
+      setNaps([]);
       const resetFV: Record<string, number | boolean> = {};
       factorDefs.forEach((f) => {
         resetFV[f.id] = f.type === "integer" ? 0 : false;
@@ -121,23 +125,17 @@ export default function LogPage({ initialDate }: LogPageProps) {
     setCalMonth(d.getMonth());
   }, [date]);
 
-  const napEndTime = useMemo(() => {
-    const totalMin = 14 * 60 + napMinutes;
-    const h = Math.floor(totalMin / 60);
-    const m = totalMin % 60;
-    return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`;
-  }, [napMinutes]);
-
   const metrics = useMemo(() => {
     return calculateMetrics({
       bedtime,
       sleepTime,
       wakeTime,
       nightWakings,
-      napStart: hasNap && napMinutes > 0 ? "14:00" : null,
-      napEnd: hasNap && napMinutes > 0 ? napEndTime : null,
+      napStart: null,
+      napEnd: null,
+      naps: naps.filter(n => n.minutes > 0),
     });
-  }, [bedtime, sleepTime, wakeTime, nightWakings, hasNap, napMinutes, napEndTime]);
+  }, [bedtime, sleepTime, wakeTime, nightWakings, naps]);
 
   const handleSave = () => {
     const entry: SleepEntry = {
@@ -147,8 +145,9 @@ export default function LogPage({ initialDate }: LogPageProps) {
       sleepTime,
       wakeTime,
       nightWakings,
-      napStart: hasNap && napMinutes > 0 ? "14:00" : null,
-      napEnd: hasNap && napMinutes > 0 ? napEndTime : null,
+      napStart: null,
+      napEnd: null,
+      naps: naps.filter(n => n.minutes > 0),
       drinks: typeof factorValues["alc_drinks"] === "number" ? (factorValues["alc_drinks"] as number) : 0,
       weed: false,
       insights: false,
@@ -176,7 +175,7 @@ export default function LogPage({ initialDate }: LogPageProps) {
       setSleepTime(s.defaultSleepTime);
       setWakeTime(s.defaultWakeTime);
       setNightWakings([]);
-      setHasNap(false);
+      setNaps([]);
       const resetFV: Record<string, number | boolean> = {};
       factorDefs.forEach((f) => {
         resetFV[f.id] = f.type === "integer" ? 0 : false;
@@ -334,7 +333,7 @@ export default function LogPage({ initialDate }: LogPageProps) {
 
       {/* ── The Night (Sleep Zone) ── */}
       <div className="mb-2 rounded-md bg-zone-sleep-bg/60 px-3 pb-2 -mx-1">
-        <ZoneLabel color="sleep">The Night</ZoneLabel>
+        <ZoneLabel color="disruption">The Night</ZoneLabel>
         <div className="flex justify-between">
           <div className="flex flex-col items-center flex-1" data-testid="input-bedtime">
             <span className="text-[10px] text-zone-sleep-muted/60 uppercase tracking-[0.15em] mb-1">In bed</span>
@@ -406,40 +405,38 @@ export default function LogPage({ initialDate }: LogPageProps) {
       <div className="mb-2 mt-4">
         <div className="flex items-center justify-between">
           <ZoneLabel color="disruption" className="mb-0">Nap</ZoneLabel>
-          {!hasNap && (
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={() => setHasNap(true)}
-              data-testid="button-add-nap"
-            >
-              <Plus className="w-4 h-4 text-zone-disruption-muted" />
-            </Button>
-          )}
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={() => setNaps(prev => [...prev, { id: generateId(), minutes: 30 }])}
+            data-testid="button-add-nap"
+          >
+            <Plus className="w-4 h-4 text-zone-disruption-muted" />
+          </Button>
         </div>
 
-        {!hasNap && (
+        {naps.length === 0 && (
           <div className="text-sm text-zone-disruption-muted/50 py-2">None</div>
         )}
 
-        {hasNap && (
-          <div className="py-3 border-b border-zone-disruption/10">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-2xl font-light text-foreground/80 tabular-nums" data-testid="text-nap-duration">
-                {formatDuration(napMinutes)}
+        {naps.map((nap) => (
+          <div key={nap.id} className="py-2 border-b border-zone-disruption/10">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-2xl font-light text-foreground/80 tabular-nums" data-testid={`text-nap-duration-${nap.id}`}>
+                {formatDuration(nap.minutes)}
               </span>
               <Button
                 size="icon"
                 variant="ghost"
-                onClick={() => setHasNap(false)}
-                data-testid="button-remove-nap"
+                onClick={() => setNaps(prev => prev.filter(n => n.id !== nap.id))}
+                data-testid={`button-remove-nap-${nap.id}`}
               >
                 <X className="w-4 h-4" />
               </Button>
             </div>
-            <NapSlider value={napMinutes} onChange={setNapMinutes} />
+            <NapSlider value={nap.minutes} onChange={(v) => setNaps(prev => prev.map(n => n.id === nap.id ? { ...n, minutes: v } : n))} />
           </div>
-        )}
+        ))}
       </div>
 
       {/* ── Metrics Strip (Hero) ── */}

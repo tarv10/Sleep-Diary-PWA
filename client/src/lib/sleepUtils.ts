@@ -17,6 +17,7 @@ export function calculateMetrics(entry: {
   nightWakings: Array<{ start: string; end: string }>;
   napStart: string | null;
   napEnd: string | null;
+  naps?: Array<{ minutes: number }>;
 }) {
   const timeInBed = timeDiffMinutes(entry.bedtime, entry.wakeTime);
   const sleepLatency = timeDiffMinutes(entry.bedtime, entry.sleepTime);
@@ -28,7 +29,9 @@ export function calculateMetrics(entry: {
   const sleepEfficiency = timeInBed > 0 ? (totalSleep / timeInBed) * 100 : 0;
 
   let napDuration = 0;
-  if (entry.napStart && entry.napEnd) {
+  if (entry.naps && entry.naps.length > 0) {
+    napDuration = entry.naps.reduce((sum, n) => sum + n.minutes, 0);
+  } else if (entry.napStart && entry.napEnd) {
     napDuration = timeDiffMinutes(entry.napStart, entry.napEnd);
   }
 

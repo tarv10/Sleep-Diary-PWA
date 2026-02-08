@@ -20,6 +20,13 @@ export const defaultFactors: FactorDefinition[] = [
   { id: "screens_off", label: "Screens off 1hr", type: "boolean" },
 ];
 
+export const napEntrySchema = z.object({
+  id: z.string(),
+  minutes: z.number().min(0),
+});
+
+export type NapEntry = z.infer<typeof napEntrySchema>;
+
 export const sleepEntrySchema = z.object({
   id: z.string(),
   date: z.string(),
@@ -29,6 +36,7 @@ export const sleepEntrySchema = z.object({
   nightWakings: z.array(nightWakingSchema),
   napStart: z.string().nullable(),
   napEnd: z.string().nullable(),
+  naps: z.array(napEntrySchema).optional(),
   drinks: z.number().min(0).max(15),
   weed: z.boolean(),
   insights: z.boolean(),

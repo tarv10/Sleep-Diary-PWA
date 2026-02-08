@@ -232,7 +232,7 @@ export default function TimePicker({ value, onChange, onClose, label }: TimePick
           </div>
         )}
 
-        <div className="relative flex items-center justify-center gap-0 px-4 py-4">
+        <div className="relative flex items-center justify-center gap-5 px-4 py-4">
           <Drum
             type="hour"
             totalMinutes={totalMinutes}
@@ -242,7 +242,7 @@ export default function TimePicker({ value, onChange, onClose, label }: TimePick
             onWheel={handleWheel("hour")}
           />
 
-          <div className="relative select-none -mx-1" style={{ height: DRUM_HEIGHT }}>
+          <div className="relative select-none" style={{ height: DRUM_HEIGHT, width: 8 }}>
             <div
               className="absolute inset-x-0 flex items-end justify-center pb-[10px] text-4xl font-light text-foreground/20 leading-none"
               style={{ top: CENTER_OFFSET, height: ITEM_HEIGHT }}
