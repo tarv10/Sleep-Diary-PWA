@@ -657,7 +657,7 @@ export function InlineTimePicker({ value, onChange, fadeBg = "#0D1117", testId }
   return (
     <div
       ref={containerRef}
-      className="flex items-center justify-end gap-0 select-none touch-none"
+      className="flex items-center justify-center gap-0 select-none touch-none"
       data-testid={testId}
     >
       <InlineDrum

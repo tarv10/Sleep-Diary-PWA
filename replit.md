@@ -53,7 +53,7 @@ Each zone has three variants in CSS: `--zone-{name}` (label), `--zone-{name}-mut
 ### Layout (Entry Screen)
 Vertical narrative — a story of the night told top to bottom:
 1. Date (tappable to open calendar picker)
-2. The Night (sleep zone) — bedtime, fell asleep, woke up
+2. The Night (sleep zone) — three inline time pickers in a horizontal row with titles: In bed, Asleep, Awake
 3. Disruptions (disruption zone) — night wakings, collapsed by default
 4. Nap (disruption zone) — optional, collapsed by default
 5. Metrics strip — total sleep as hero number, efficiency, in bed

@@ -333,11 +333,22 @@ export default function LogPage({ initialDate }: LogPageProps) {
       </div>
 
       {/* ── The Night (Sleep Zone) ── */}
-      <div className="mb-2 rounded-md bg-zone-sleep-bg/60 px-4 -mx-1">
+      <div className="mb-2 rounded-md bg-zone-sleep-bg/60 px-3 pb-2 -mx-1">
         <ZoneLabel color="sleep">The Night</ZoneLabel>
-        <InlineTimeRow label="Bedtime" value={bedtime} onChange={setBedtime} testId="input-bedtime" />
-        <InlineTimeRow label="Fell asleep" value={sleepTime} onChange={setSleepTime} testId="input-sleep-time" />
-        <InlineTimeRow label="Woke up" value={wakeTime} onChange={setWakeTime} testId="input-wake-time" noBorder />
+        <div className="flex justify-between">
+          <div className="flex flex-col items-center flex-1" data-testid="input-bedtime">
+            <span className="text-[10px] text-zone-sleep-muted/60 uppercase tracking-[0.15em] mb-1">In bed</span>
+            <InlineTimePicker value={bedtime} onChange={setBedtime} fadeBg="#0f1219" testId="input-bedtime-picker" />
+          </div>
+          <div className="flex flex-col items-center flex-1" data-testid="input-sleep-time">
+            <span className="text-[10px] text-zone-sleep-muted/60 uppercase tracking-[0.15em] mb-1">Asleep</span>
+            <InlineTimePicker value={sleepTime} onChange={setSleepTime} fadeBg="#0f1219" testId="input-sleep-time-picker" />
+          </div>
+          <div className="flex flex-col items-center flex-1" data-testid="input-wake-time">
+            <span className="text-[10px] text-zone-sleep-muted/60 uppercase tracking-[0.15em] mb-1">Awake</span>
+            <InlineTimePicker value={wakeTime} onChange={setWakeTime} fadeBg="#0f1219" testId="input-wake-time-picker" />
+          </div>
+        </div>
       </div>
 
       {/* ── Disruptions (Disruption Zone) ── */}
