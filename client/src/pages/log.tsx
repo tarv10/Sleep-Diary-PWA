@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import { ChevronLeft, ChevronRight, Plus, X, Trash2, Star, Check } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, X, Trash2, Star, Check, Moon, CloudMoon, Sunrise } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
@@ -336,19 +336,21 @@ export default function LogPage({ initialDate }: LogPageProps) {
       </div>
 
       {/* ── The Night (Sleep Zone) ── */}
-      <div className="mb-2 rounded-md bg-zone-sleep-bg/60 px-3 pb-2 -mx-1">
-        <ZoneLabel color="disruption">The Night</ZoneLabel>
-        <div className="flex justify-between gap-3 pt-1">
+      <div className="mb-2 rounded-md bg-zone-sleep-bg/60 px-3 pb-3 pt-4 -mx-1">
+        <div className="flex justify-between gap-3">
           <div className="flex flex-col items-center flex-1" data-testid="input-bedtime">
+            <Moon className="w-4 h-4 mb-1.5 text-zone-disruption-muted" strokeWidth={1.5} />
             <span className="text-[10px] text-zone-disruption-muted uppercase tracking-[0.15em] mb-1">In bed</span>
             <InlineTimePicker value={bedtime} onChange={setBedtime} fadeBg="#0f1219" testId="input-bedtime-picker" />
           </div>
           <div className="flex flex-col items-center flex-1" data-testid="input-sleep-time">
-            <span className="text-[10px] uppercase tracking-[0.15em] mb-1" style={{ color: "hsl(120, 35%, 48%)" }}>Asleep</span>
+            <CloudMoon className="w-4 h-4 mb-1.5" strokeWidth={1.5} style={{ color: "hsl(200, 75%, 60%)" }} />
+            <span className="text-[10px] uppercase tracking-[0.15em] mb-1" style={{ color: "hsl(200, 75%, 60%)" }}>Asleep</span>
             <InlineTimePicker value={sleepTime} onChange={setSleepTime} fadeBg="#0f1219" testId="input-sleep-time-picker" />
           </div>
           <div className="flex flex-col items-center flex-1" data-testid="input-wake-time">
-            <span className="text-[10px] text-primary uppercase tracking-[0.15em] mb-1">Awake</span>
+            <Sunrise className="w-4 h-4 mb-1.5" strokeWidth={1.5} style={{ color: "hsl(45, 70%, 55%)" }} />
+            <span className="text-[10px] uppercase tracking-[0.15em] mb-1" style={{ color: "hsl(45, 70%, 55%)" }}>Awake</span>
             <InlineTimePicker value={wakeTime} onChange={setWakeTime} fadeBg="#0f1219" testId="input-wake-time-picker" />
           </div>
         </div>
