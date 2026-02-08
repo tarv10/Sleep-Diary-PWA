@@ -151,8 +151,6 @@ export default function TimePicker({ value, onChange, onClose, label }: TimePick
   const handleTouchStart = useCallback((drum: "hour" | "minute") => (e: React.TouchEvent) => {
     cancelAnimationFrame(animFrame.current);
     cancelAnimationFrame(hourAlignFrame.current);
-    hourAlignRef.current = 0;
-    setHourAlignOffset(0);
     isDragging.current = drum;
     dragStartY.current = e.touches[0].clientY;
     dragStartMinutes.current = totalMinutesRef.current;
@@ -202,8 +200,6 @@ export default function TimePicker({ value, onChange, onClose, label }: TimePick
     e.preventDefault();
     cancelAnimationFrame(animFrame.current);
     cancelAnimationFrame(hourAlignFrame.current);
-    hourAlignRef.current = 0;
-    setHourAlignOffset(0);
     const scale = drum === "hour" ? 30 / ITEM_HEIGHT : 7.5 / ITEM_HEIGHT;
     const delta = e.deltaY * scale;
     const newTotal = totalMinutesRef.current + delta;
@@ -578,8 +574,6 @@ export function InlineTimePicker({ value, onChange, fadeBg = "#0D1117", testId }
   const handleTouchStart = useCallback((drum: "hour" | "minute") => (e: React.TouchEvent) => {
     cancelAnimationFrame(animFrame.current);
     cancelAnimationFrame(hourAlignFrame.current);
-    hourAlignRef.current = 0;
-    setHourAlignOffset(0);
     isDragging.current = drum;
     dragStartY.current = e.touches[0].clientY;
     dragStartMinutes.current = totalMinutesRef.current;
@@ -642,8 +636,6 @@ export function InlineTimePicker({ value, onChange, fadeBg = "#0D1117", testId }
   const handleWheel = useCallback((drum: "hour" | "minute") => (e: React.WheelEvent) => {
     cancelAnimationFrame(animFrame.current);
     cancelAnimationFrame(hourAlignFrame.current);
-    hourAlignRef.current = 0;
-    setHourAlignOffset(0);
     const scale = drum === "hour" ? 30 / INLINE_ITEM_HEIGHT : 7.5 / INLINE_ITEM_HEIGHT;
     const delta = e.deltaY * scale;
     const newTotal = totalMinutesRef.current + delta;
