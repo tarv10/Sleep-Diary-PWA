@@ -29,33 +29,27 @@ import {
 
 function FadeValue({ value, className, testId }: { value: string; className?: string; testId?: string }) {
   const [display, setDisplay] = useState(value);
-  const [fading, setFading] = useState(false);
-  const latestValue = useRef(value);
+  const [visible, setVisible] = useState(true);
   const timer = useRef<ReturnType<typeof setTimeout>>();
-
+  const latestValue = useRef(value);
   latestValue.current = value;
 
   useEffect(() => {
-    if (value === display) {
-      setFading(false);
-      return;
-    }
-    if (fading) return;
-    setFading(true);
+    if (value === display) return;
+    setVisible(false);
     clearTimeout(timer.current);
     timer.current = setTimeout(() => {
       setDisplay(latestValue.current);
-      setFading(false);
-    }, 150);
-    return () => clearTimeout(timer.current);
-  }, [value, display, fading]);
+      requestAnimationFrame(() => setVisible(true));
+    }, 130);
+  }, [value]);
 
   return (
     <div
       className={cn(className)}
       style={{
-        opacity: fading ? 0 : 1,
-        transition: fading ? "opacity 120ms ease-out" : "opacity 150ms ease-in",
+        opacity: visible ? 1 : 0,
+        transition: visible ? "opacity 150ms ease-in" : "opacity 100ms ease-out",
       }}
       data-testid={testId}
     >
