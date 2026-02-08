@@ -365,17 +365,6 @@ export default function LogPage({ initialDate }: LogPageProps) {
       {/* ── The Night (Sleep Zone) ── */}
       <div className="mb-2 rounded-md bg-zone-sleep-bg/60 px-3 pb-3 pt-4 -mx-1">
         <div className="relative flex items-start">
-          <div
-            className="absolute pointer-events-none rounded-lg"
-            style={{
-              top: 24,
-              left: -4,
-              right: -4,
-              bottom: -4,
-              background: "linear-gradient(to right, hsla(120, 35%, 48%, 0.06), hsla(200, 75%, 60%, 0.08) 50%, hsla(45, 70%, 55%, 0.06))",
-              filter: "blur(16px)",
-            }}
-          />
           <div className="flex flex-col items-center flex-1" data-testid="input-bedtime">
             <svg className="w-4 h-4 mb-1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" style={{ color: "hsl(120, 35%, 48%)" }}>
               <path d="M12 1C9 6 7 9 7 14c0 2 1.2 3.8 3 4.8C11.5 19.5 13 18 14 16c-.5 2 .5 4 2 5.2C17.5 19.5 19 17 19 14c0-3-1.5-5.5-3-8C14.5 4 13 2.5 12 1z" />
