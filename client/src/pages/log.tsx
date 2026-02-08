@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import { ChevronLeft, ChevronRight, Plus, X, Trash2, Star, Check, Moon, CloudMoon, Sunrise } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, X, Trash2, Star, Check, Moon, CloudMoon, Sunrise, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
@@ -271,14 +271,10 @@ export default function LogPage({ initialDate }: LogPageProps) {
           className="w-full text-center py-2"
           data-testid="button-date-picker"
         >
-          <div className="text-xl font-medium text-foreground tracking-tight">
+          <div className="text-xl font-medium text-foreground tracking-tight inline-flex items-center gap-2">
             <span className="border-b border-dashed border-foreground/25 pb-0.5">{displayDateStr}</span>
+            {existingId && <Save className="w-3.5 h-3.5 text-zone-sleep-muted" strokeWidth={1.5} />}
           </div>
-          {existingId && (
-            <div className="text-[10px] text-zone-sleep-muted mt-0.5 uppercase tracking-[0.15em]">
-              saved
-            </div>
-          )}
         </button>
 
         {calendarOpen && (
