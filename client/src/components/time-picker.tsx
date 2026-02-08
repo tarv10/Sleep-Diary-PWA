@@ -717,8 +717,19 @@ function InlineDrum({ type, totalMinutes, currentValue, items, onTouchStart, onW
             }
           }
         } else {
-          opacity = Math.max(0.08, 1 - distFromCenter * 0.4);
+          const minuteVal = items[itemIndex];
+          const snappedMinute = Math.round(minuteInHour / 15) * 15;
+          const currentQuarter = snappedMinute === 60 ? 0 : snappedMinute;
+          if (minuteVal === currentQuarter) {
+            opacity = 1;
+          } else {
+            opacity = 0.08;
+          }
         }
+
+        const isCenterItem = isHour
+          ? items[itemIndex] === ownerHour24
+          : items[itemIndex] === (Math.round(minuteInHour / 15) * 15 === 60 ? 0 : Math.round(minuteInHour / 15) * 15);
 
         return (
           <div
@@ -737,7 +748,7 @@ function InlineDrum({ type, totalMinutes, currentValue, items, onTouchStart, onW
                 isHour ? "text-2xl font-semibold" : "text-lg font-light"
               )}
               style={
-                color && distFromCenter < 0.5
+                color && isCenterItem && distFromCenter < 0.5
                   ? {
                       color: settled ? `color-mix(in srgb, ${color} ${colorMix}%, white)` : undefined,
                       transition: settled ? "color 1.8s ease-in" : "color 0.15s ease-out",
