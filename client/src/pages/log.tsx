@@ -363,7 +363,7 @@ export default function LogPage({ initialDate }: LogPageProps) {
       </div>
 
       {/* ── The Night (Sleep Zone) ── */}
-      <div className="mb-2 rounded-md bg-zone-sleep-bg/60 px-3 pb-3 pt-4 -mx-1">
+      <div className="mb-2 px-3 pb-3 pt-4 -mx-1">
         <div className="relative flex items-start">
           <div className="flex flex-col items-center flex-1" data-testid="input-bedtime">
             <svg className="w-4 h-4 mb-1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" style={{ color: "hsl(120, 35%, 48%)" }}>
