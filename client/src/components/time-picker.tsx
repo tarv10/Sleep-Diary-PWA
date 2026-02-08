@@ -244,7 +244,7 @@ export default function TimePicker({ value, onChange, onClose, label }: TimePick
 
           <div className="relative select-none" style={{ height: DRUM_HEIGHT, width: 8 }}>
             <div
-              className="absolute inset-x-0 flex items-end justify-center pb-[10px] text-4xl font-light text-foreground/20 leading-none"
+              className="absolute inset-x-0 flex items-end justify-center pb-[13px] text-4xl font-light text-foreground/20 leading-none"
               style={{ top: CENTER_OFFSET, height: ITEM_HEIGHT }}
             >
               :
@@ -606,7 +606,7 @@ export function InlineTimePicker({ value, onChange, fadeBg = "#0D1117", testId }
 
       <div className="relative select-none" style={{ height: INLINE_DRUM_HEIGHT, width: 8 }}>
         <div
-          className="absolute inset-x-0 flex items-end justify-center pb-[4px] text-lg font-light text-foreground/25 leading-none"
+          className="absolute inset-x-0 flex items-end justify-center pb-[6px] text-lg font-light text-foreground/25 leading-none"
           style={{ top: INLINE_CENTER, height: INLINE_ITEM_HEIGHT }}
         >
           :
