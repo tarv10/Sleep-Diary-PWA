@@ -334,17 +334,17 @@ export default function LogPage({ initialDate }: LogPageProps) {
       {/* ── The Night (Sleep Zone) ── */}
       <div className="mb-2 rounded-md bg-zone-sleep-bg/60 px-3 pb-2 -mx-1">
         <ZoneLabel color="disruption">The Night</ZoneLabel>
-        <div className="flex justify-between pt-1">
+        <div className="flex justify-between gap-3 pt-1">
           <div className="flex flex-col items-center flex-1" data-testid="input-bedtime">
-            <span className="text-[10px] text-zone-sleep-muted uppercase tracking-[0.15em] mb-1">In bed</span>
+            <span className="text-[10px] text-zone-disruption-muted uppercase tracking-[0.15em] mb-1">In bed</span>
             <InlineTimePicker value={bedtime} onChange={setBedtime} fadeBg="#0f1219" testId="input-bedtime-picker" />
           </div>
           <div className="flex flex-col items-center flex-1" data-testid="input-sleep-time">
-            <span className="text-[10px] text-zone-sleep-muted uppercase tracking-[0.15em] mb-1">Asleep</span>
+            <span className="text-[10px] uppercase tracking-[0.15em] mb-1" style={{ color: "hsl(120, 35%, 48%)" }}>Asleep</span>
             <InlineTimePicker value={sleepTime} onChange={setSleepTime} fadeBg="#0f1219" testId="input-sleep-time-picker" />
           </div>
           <div className="flex flex-col items-center flex-1" data-testid="input-wake-time">
-            <span className="text-[10px] text-zone-sleep-muted uppercase tracking-[0.15em] mb-1">Awake</span>
+            <span className="text-[10px] text-primary uppercase tracking-[0.15em] mb-1">Awake</span>
             <InlineTimePicker value={wakeTime} onChange={setWakeTime} fadeBg="#0f1219" testId="input-wake-time-picker" />
           </div>
         </div>
