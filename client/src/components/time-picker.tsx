@@ -293,9 +293,12 @@ function Drum({ type, totalMinutes, currentValue, items, onTouchStart, onWheel }
   const halfRender = Math.floor(renderCount / 2);
 
   const norm = normalizeMinutes(totalMinutes);
-  const ownerHour24 = Math.floor(norm / 60);
   const minuteInHour = norm % 60;
-  const minuteProgress = minuteInHour / 60;
+
+  const snappedTotal = Math.round(norm / 15) * 15;
+  const snappedNorm = snappedTotal % 1440;
+  const snapHour = Math.floor(snappedNorm / 60);
+  const snapMinute = snappedNorm % 60;
 
   const isHour = type === "hour";
 
@@ -338,26 +341,34 @@ function Drum({ type, totalMinutes, currentValue, items, onTouchStart, onWheel }
         const scale = Math.max(0.7, 1 - distFromCenter * 0.08);
 
         let opacity: number;
+        const val = items[itemIndex];
 
         if (isHour) {
-          const hourVal = items[itemIndex];
-          if (hourVal === ownerHour24) {
+          if (val === snapHour) {
             opacity = 1;
           } else {
-            const nextHour = (ownerHour24 + 1) % 24;
-            const prevHour = (ownerHour24 - 1 + 24) % 24;
-            if (hourVal === nextHour) {
-              const fade = minuteProgress > 0.85 ? (minuteProgress - 0.85) / 0.15 : 0;
-              opacity = 0.1 + fade * 0.25;
-            } else if (hourVal === prevHour) {
-              const fade = minuteProgress < 0.15 ? (0.15 - minuteProgress) / 0.15 : 0;
-              opacity = 0.1 + fade * 0.25;
+            const nextHour = (snapHour + 1) % 24;
+            const prevHour = (snapHour - 1 + 24) % 24;
+            if (val === nextHour || val === prevHour) {
+              opacity = 0.12;
             } else {
               opacity = 0.08;
             }
           }
         } else {
-          opacity = Math.max(0.08, 1 - distFromCenter * 0.4);
+          if (val === snapMinute) {
+            opacity = 1;
+          } else {
+            const quarterDist = Math.min(
+              Math.abs(val - minuteInHour),
+              60 - Math.abs(val - minuteInHour)
+            );
+            if (quarterDist <= 15) {
+              opacity = 0.25;
+            } else {
+              opacity = 0.12;
+            }
+          }
         }
 
         return (
@@ -672,9 +683,12 @@ function InlineDrum({ type, totalMinutes, currentValue, items, onTouchStart, onW
   const halfRender = Math.floor(renderCount / 2);
 
   const norm = normalizeMinutes(totalMinutes);
-  const ownerHour24 = Math.floor(norm / 60);
   const minuteInHour = norm % 60;
-  const minuteProgress = minuteInHour / 60;
+
+  const snappedTotal = Math.round(norm / 15) * 15;
+  const snappedNorm = snappedTotal % 1440;
+  const snapHour = Math.floor(snappedNorm / 60);
+  const snapMinute = snappedNorm % 60;
 
   const isHour = type === "hour";
 
@@ -705,34 +719,27 @@ function InlineDrum({ type, totalMinutes, currentValue, items, onTouchStart, onW
         const scale = Math.max(0.7, 1 - distFromCenter * 0.08);
 
         let opacity: number;
+        const val = items[itemIndex];
 
         if (isHour) {
-          const hourVal = items[itemIndex];
-          if (hourVal === ownerHour24) {
+          if (val === snapHour) {
             opacity = 1;
           } else {
-            const nextHour = (ownerHour24 + 1) % 24;
-            const prevHour = (ownerHour24 - 1 + 24) % 24;
-            if (hourVal === nextHour) {
-              const fade = minuteProgress > 0.85 ? (minuteProgress - 0.85) / 0.15 : 0;
-              opacity = 0.1 + fade * 0.25;
-            } else if (hourVal === prevHour) {
-              const fade = minuteProgress < 0.15 ? (0.15 - minuteProgress) / 0.15 : 0;
-              opacity = 0.1 + fade * 0.25;
+            const nextHour = (snapHour + 1) % 24;
+            const prevHour = (snapHour - 1 + 24) % 24;
+            if (val === nextHour || val === prevHour) {
+              opacity = 0.12;
             } else {
               opacity = 0.08;
             }
           }
         } else {
-          const minuteVal = items[itemIndex];
-          const snappedMinute = Math.round(minuteInHour / 15) * 15;
-          const currentQuarter = snappedMinute === 60 ? 0 : snappedMinute;
-          if (minuteVal === currentQuarter) {
+          if (val === snapMinute) {
             opacity = 1;
           } else {
             const quarterDist = Math.min(
-              Math.abs(minuteVal - minuteInHour),
-              60 - Math.abs(minuteVal - minuteInHour)
+              Math.abs(val - minuteInHour),
+              60 - Math.abs(val - minuteInHour)
             );
             if (quarterDist <= 15) {
               opacity = 0.25;
@@ -742,9 +749,7 @@ function InlineDrum({ type, totalMinutes, currentValue, items, onTouchStart, onW
           }
         }
 
-        const isCenterItem = isHour
-          ? items[itemIndex] === ownerHour24
-          : items[itemIndex] === (Math.round(minuteInHour / 15) * 15 === 60 ? 0 : Math.round(minuteInHour / 15) * 15);
+        const isCenterItem = isHour ? val === snapHour : val === snapMinute;
 
         return (
           <div
