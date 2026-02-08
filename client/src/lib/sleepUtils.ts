@@ -6,7 +6,7 @@ export function timeToMinutes(time: string): number {
 export function timeDiffMinutes(start: string, end: string): number {
   let s = timeToMinutes(start);
   let e = timeToMinutes(end);
-  if (e <= s) e += 24 * 60;
+  if (e < s) e += 24 * 60;
   return e - s;
 }
 
