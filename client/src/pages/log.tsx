@@ -124,10 +124,10 @@ export default function LogPage({ initialDate }: LogPageProps) {
       sleepTime,
       wakeTime,
       nightWakings,
-      napStart: hasNap ? "14:00" : null,
-      napEnd: hasNap ? napEndTime : null,
+      napStart: hasNap && napMinutes > 0 ? "14:00" : null,
+      napEnd: hasNap && napMinutes > 0 ? napEndTime : null,
     });
-  }, [bedtime, sleepTime, wakeTime, nightWakings, hasNap, napEndTime]);
+  }, [bedtime, sleepTime, wakeTime, nightWakings, hasNap, napMinutes, napEndTime]);
 
   const handleSave = () => {
     const entry: SleepEntry = {
@@ -137,8 +137,8 @@ export default function LogPage({ initialDate }: LogPageProps) {
       sleepTime,
       wakeTime,
       nightWakings,
-      napStart: hasNap ? "14:00" : null,
-      napEnd: hasNap ? napEndTime : null,
+      napStart: hasNap && napMinutes > 0 ? "14:00" : null,
+      napEnd: hasNap && napMinutes > 0 ? napEndTime : null,
       drinks,
       weed,
       insights,
@@ -681,31 +681,26 @@ function snapMinutes(raw: number): number {
 function NapSlider({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [dragging, setDragging] = useState(false);
-  const [rawValue, setRawValue] = useState(value);
 
-  const pct = (dragging ? napRawToSlider(rawValue) : napMinutesToSlider(value)) * 100;
+  const pct = napMinutesToSlider(value) * 100;
 
-  const posToRaw = (clientX: number): number => {
+  const posToSnapped = (clientX: number): number => {
     const track = trackRef.current;
-    if (!track) return rawValue;
+    if (!track) return value;
     const rect = track.getBoundingClientRect();
     const pos = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-    return napSliderToRaw(pos);
+    return snapMinutes(napSliderToRaw(pos));
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
     e.preventDefault();
-    const raw = posToRaw(e.touches[0].clientX);
     setDragging(true);
-    setRawValue(raw);
-    onChange(snapMinutes(raw));
+    onChange(posToSnapped(e.touches[0].clientX));
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
     e.preventDefault();
-    const raw = posToRaw(e.touches[0].clientX);
-    setRawValue(raw);
-    onChange(snapMinutes(raw));
+    onChange(posToSnapped(e.touches[0].clientX));
   };
 
   const handleTouchEnd = () => {
@@ -713,16 +708,17 @@ function NapSlider({ value, onChange }: { value: number; onChange: (v: number) =
   };
 
   const handleClick = (e: React.MouseEvent) => {
-    const raw = posToRaw(e.clientX);
-    onChange(snapMinutes(raw));
+    onChange(posToSnapped(e.clientX));
   };
 
   const ticks = [
     { min: 0, label: "0" },
+    { min: 5, label: "5m" },
     { min: 15, label: "15m" },
     { min: 30, label: "30m" },
     { min: 45, label: "45m" },
     { min: 60, label: "1h" },
+    { min: 90, label: "1.5h" },
     { min: 120, label: "2h" },
     { min: 180, label: "3h" },
   ];
